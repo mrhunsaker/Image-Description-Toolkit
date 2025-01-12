@@ -1,0 +1,348 @@
+Release 1 Documentation: Image Processing Toolkit
+
+Overview
+
+Welcome to Release 1 of the Image Processing Toolkit! This toolkit includes:
+
+DescribeImage: A script that generates AI-powered descriptions of images and writes them to individual .txt files and a single HTML report.
+
+ConvertImage: A script that converts .heic image files to .jpg format for compatibility with the description generation script.
+
+This documentation walks you through setting up your environment, running the scripts, and understanding their usage.
+
+Step 1: Install Python
+
+Download Python:
+
+Visit Python's official website (https://www.python.org/).
+
+Download the latest version for your operating system.
+
+Install Python:
+
+Run the installer.
+
+Ensure you select the option Add Python to PATH during installation.
+
+Verify Installation:
+
+Open a terminal or command prompt and type:
+
+python --version
+
+This should display the installed Python version.
+
+Set Up a Virtual Environment (Recommended):
+
+Create a project directory (e.g., image-toolkit).
+
+Navigate to the directory:
+
+mkdir image-toolkit
+cd image-toolkit
+
+Create a virtual environment:
+
+python -m venv venv
+
+Activate the virtual environment:
+
+Windows:
+
+venv\Scripts\activate
+
+macOS/Linux:
+
+source venv/bin/activate
+
+Once activated, all libraries will be installed in this environment.
+
+Install Required Libraries:
+
+pip install pillow pillow-heif
+
+To deactivate the virtual environment when done:
+
+deactivate
+
+Step 2: Install Ollama
+
+Download Ollama:
+
+Visit Ollama's official website (https://ollama.ai/) and follow the instructions to download and install Ollama on your system.
+
+Run Ollama:
+
+Ensure the Ollama CLI (ollama) is accessible in your terminal.
+
+Verify installation by running:
+
+ollama --version
+
+This should display the installed Ollama version.
+
+Ensure llama3.2-vision Model is Available:
+
+Verify the model is accessible by running:
+
+ollama run llama3.2-vision
+
+Step 3: Install Required Python Libraries
+
+If you haven’t set up a virtual environment, install the libraries globally:
+
+pip install pillow pillow-heif
+
+Pillow: A powerful library for image processing.
+
+Pillow-Heif: Adds support for .heic files.
+
+Step 4: Set Up Your Working Directory
+
+Create a directory to store your images and scripts. For example on Windows:
+
+C:\users\yourusername\playground\
+
+Place all .heic and .jpg images in a folder named images within this directory:
+
+C:\users\yourusername\playground\images
+
+Step 5: Prepare a Prompt File
+
+The DescribeImage script requires a prompt to generate descriptions. Create a file named prompt.txt in the working directory with the desired prompt, such as:
+
+Describe the image comprehensively.
+
+If you want to specify a different prompt file, pass its name as an argument when running the script.
+
+Step 6: Creating the Scripts
+
+See the scripts section of this documentation further on for the scripts. You need to copy the text for each script into the appropriate filename and save as DescribeImage and ConvertImage with a .py extension for each.
+
+Running the Scripts
+
+1. Convert .heic Files to .jpg (ConvertImage)
+
+Usage:
+
+Ensure your .heic files are placed in the images directory.
+
+Run the script:
+
+python ConvertImage.py
+
+The converted .jpg files will be saved in a converted subdirectory within images.
+
+2. Generate Image Descriptions (DescribeImage)
+
+Usage:
+
+Ensure your .jpg files are ready in the images directory. This should including any converted images into this directory.
+
+Create a prompt.txt file with your desired prompt.
+
+Run the script:
+
+python DescribeImage.py
+
+Outputs:
+
+Individual .txt files for each image with the generated descriptions.
+
+A single image_descriptions.html file containing all descriptions.
+
+Notes and Customizations
+
+Changing the Directory Path
+
+If your images are located in a different directory, update the directory_path variable in both scripts to reflect the correct path.
+
+Using a Custom Prompt File
+
+To use a different prompt file with DescribeImage, pass the file name as a command-line argument:
+
+python DescribeImage.py custom_prompt.txt
+
+Troubleshooting
+
+Python Not Found:
+
+Ensure Python is added to PATH during installation.
+
+Ollama CLI Issues:
+
+Confirm Ollama is installed and the llama3.2-vision model is available.
+
+Library Installation Errors:
+
+Verify pip is installed and updated:
+
+python -m ensurepip --upgrade
+python -m pip install --upgrade pip
+
+HEIC Conversion Errors:
+
+Ensure .heic files are valid and supported by Pillow-Heif.
+
+Release 1 Summary
+
+This release provides the following scripts.
+
+Scripts:
+
+DescribeImage.py: Generate AI descriptions for images and compile them into .txt and .html formats.
+
+import os
+import subprocess
+import sys
+from datetime import datetime
+
+def get_image_description(image_path, prompt, log_file):
+    """
+    Use the Ollama CLI to process an image and get its description.
+    """
+    try:
+        # Log the start time
+        start_time = datetime.now()
+        with open(log_file, "a") as log:
+            log.write(f"Start Time: {start_time}, Image: {image_path}\n")
+            log.write(f"Prompt: {prompt}\n")
+
+        # Build the Ollama CLI command
+        command = [
+            "ollama", "run", "llama3.2-vision"
+        ]
+
+        # Start the Ollama process
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Send the custom prompt
+        describe_command = f"{prompt} {image_path}\n"
+        output, error = process.communicate(describe_command)
+
+        # Log the end time
+        end_time = datetime.now()
+        with open(log_file, "a") as log:
+            log.write(f"End Time: {end_time}, Duration: {end_time - start_time}\n")
+
+        if process.returncode == 0:
+            return output.strip()  # The description
+        else:
+            with open(log_file, "a") as log:
+                log.write(f"Error: {error.strip()}\n")
+            return f"Error: {error.strip()}"
+    except Exception as e:
+        with open(log_file, "a") as log:
+            log.write(f"Exception: {str(e)}\n")
+        return f"Error processing image: {str(e)}"
+
+def process_images_in_directory(directory_path, prompt):
+    """
+    Loop through images in a directory, save descriptions using Ollama CLI, and generate an HTML file.
+    """
+    log_file = "processing_log.txt"
+    html_file = "image_descriptions.html"
+
+    if not os.path.exists(directory_path):
+        print(f"Directory '{directory_path}' does not exist.")
+        return
+
+    # Start HTML content
+    html_content = "<html><head><title>Image Descriptions</title></head><body>"
+    html_content += "<h1>Image Descriptions</h1>"
+
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+
+        if os.path.isfile(file_path) and filename.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif")):
+            print(f"Processing: {filename}")
+            description = get_image_description(file_path, prompt, log_file)
+
+            # Save description to a text file with the same name as the image
+            text_file_path = os.path.splitext(file_path)[0] + ".txt"
+            with open(text_file_path, "w") as text_file:
+                text_file.write(description)
+            print(f"Description saved to: {text_file_path}")
+
+            # Add description to HTML content
+            html_content += f"<h2>{filename}</h2>"
+            html_content += f"<p>{description}</p>"
+
+    # Finalize HTML content
+    html_content += "</body></html>"
+
+    # Save HTML file
+    with open(html_file, "w") as f:
+        f.write(html_content)
+    print(f"HTML report saved to {html_file}")
+
+def main():
+    # Set the default prompt file
+    prompt_file = "prompt.txt"
+
+    # Check if a custom prompt file is provided on the command line
+    if len(sys.argv) > 1:
+        prompt_file = sys.argv[1]
+
+    # Read the prompt from the file
+    try:
+        with open(prompt_file, "r") as f:
+            prompt = f.read().strip()
+    except FileNotFoundError:
+        print(f"Error: Prompt file '{prompt_file}' not found.")
+        return
+
+    directory_path = r"C:\users\YourUserName\playground\images"  # Replace with your image directory
+    process_images_in_directory(directory_path, prompt)
+
+if __name__ == "__main__":
+    main()
+
+
+ConvertImage.py: Convert .heic files to .jpg for compatibility.
+
+import os
+from PIL import Image
+import pillow_heif  # Use pillow-heif for HEIC file handling
+
+def convert_heic_to_jpg(directory_path):
+    """
+    Convert .heic files in the directory_path to .jpg files.
+    """
+    output_directory = os.path.join(directory_path, "converted")
+
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    for filename in os.listdir(directory_path):
+        if filename.lower().endswith(".heic"):
+            input_path = os.path.join(directory_path, filename)
+            output_path = os.path.join(output_directory, os.path.splitext(filename)[0] + ".jpg")
+
+            try:
+                # Open .heic file using pillow-heif
+                heif_image = pillow_heif.open_heif(input_path)
+
+                # Convert to PIL image
+                image = Image.frombytes(
+                    heif_image.mode,
+                    heif_image.size,
+                    heif_image.data
+                )
+
+                # Save as .jpg
+                image.save(output_path, "JPEG")
+                print(f"Converted: {input_path} -> {output_path}")
+            except Exception as e:
+                print(f"Failed to convert {input_path}: {e}")
+
+def main():
+    directory_path = r"C:\users\YourUserName\playground\images"  # Same directory as the earlier script
+    convert_heic_to_jpg(directory_path)
+
+if __name__ == "__main__":
+    main()
+
+Happy processing!
+
