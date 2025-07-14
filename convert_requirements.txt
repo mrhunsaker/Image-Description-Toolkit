@@ -1,0 +1,3 @@
+# Requirements for ConvertImage.py - HEIC to JPG converter
+pillow>=10.0.0
+pillow-heif>=0.13.0
