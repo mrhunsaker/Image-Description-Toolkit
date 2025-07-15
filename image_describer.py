@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """
-Enhanced Image Description Script with Memory Optimization
+ImageDescriber - AI-Powered Image Analysis Tool
 
-This script processes a directory of image files, uses Ollama's vision model
-to generate descriptions, and saves those descriptions to a text file.
-Includes memory optimization features for better performance.
+This script processes directories of image files using Ollama's vision models
+to generate detailed descriptions and extract metadata. Features include:
+
+- AI-powered image descriptions using various Ollama vision models
+- EXIF metadata extraction (camera settings, GPS, timestamps)
+- Configurable prompt styles for different analysis needs
+- Memory optimization for processing large image collections
+- Comprehensive text file output with metadata integration
+- Support for multiple image formats (JPG, PNG, BMP, TIFF, WebP)
+
+The tool outputs descriptions to text files with comprehensive metadata
+including camera settings, GPS coordinates, timestamps, and AI-generated
+descriptions using configurable prompt styles.
 """
 
 import os
@@ -36,7 +46,7 @@ class ImageDescriber:
     """Class to handle image description using Ollama vision model"""
     
     def __init__(self, model_name: str = None, max_image_size: int = 1024, 
-                 enable_compression: bool = True, batch_delay: float = 1.0, 
+                 enable_compression: bool = True, batch_delay: float = 2.0, 
                  config_file: str = "config.json", prompt_style: str = "detailed"):
         """
         Initialize the ImageDescriber
@@ -56,7 +66,7 @@ class ImageDescriber:
         if model_name is not None:
             self.model_name = model_name
         else:
-            self.model_name = self.config.get('model_settings', {}).get('model', 'llama3.2-vision')
+            self.model_name = self.config.get('model_settings', {}).get('model', 'moondream')
         
         self.max_image_size = max_image_size
         self.enable_compression = enable_compression
@@ -108,16 +118,22 @@ class ImageDescriber:
         """
         return {
             "model_settings": {
-                "model": "llama3.2-vision",
+                "model": "moondream",
                 "temperature": 0.1,
-                "num_predict": 400,
+                "num_predict": 600,
                 "top_k": 40,
                 "top_p": 0.9,
-                "repeat_penalty": 1.1
+                "repeat_penalty": 1.3
             },
             "prompt_template": "Describe this image in detail, including:\n- Main subjects/objects\n- Setting/environment\n- Key colors and lighting\n- Notable activities or composition\nKeep it comprehensive and informative for metadata.",
+            "default_prompt_style": "detailed",
             "prompt_variations": {
-                "detailed": "Describe this image in detail, including:\n- Main subjects/objects\n- Setting/environment\n- Key colors and lighting\n- Notable activities or composition\nKeep it comprehensive and informative for metadata."
+                "detailed": "Describe this image in detail, including:\n- Main subjects/objects\n- Setting/environment\n- Key colors and lighting\n- Notable activities or composition\nKeep it comprehensive and informative for metadata.",
+                "concise": "Describe this image concisely, including:\n- Main subjects/objects\n- Setting/environment\n- Key colors and lighting\n- Notable activities or composition.",
+                "narrative": "Provide a narrative description including objects, colors and detail. Avoid interpretation, just describe.",
+                "artistic": "Analyze this image from an artistic perspective, describing:\n- Visual composition and framing\n- Color palette and lighting mood\n- Artistic style or technique\n- Emotional tone or atmosphere\n- Subject matter and symbolism",
+                "technical": "Provide a technical analysis of this image:\n- Camera settings and photographic technique\n- Lighting conditions and quality\n- Composition and framing\n- Image quality and clarity\n- Technical strengths or weaknesses",
+                "colorful": "Give me a rich, vivid description emphasizing colors, lighting, and visual atmosphere. Focus on the palette, color relationships, and how colors contribute to the mood and composition."
             },
             "output_format": {
                 "include_timestamp": True,
@@ -128,7 +144,7 @@ class ImageDescriber:
             },
             "processing_options": {
                 "default_max_image_size": 1024,
-                "default_batch_delay": 1.0,
+                "default_batch_delay": 2.0,
                 "default_compression": True,
                 "extract_metadata": True,
                 "supported_formats": [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
@@ -809,8 +825,8 @@ Configuration:
     parser.add_argument(
         "--batch-delay",
         type=float,
-        default=1.0,
-        help="Delay between processing images in seconds (default: 1.0)"
+        default=2.0,
+        help="Delay between processing images in seconds (default: 2.0)"
     )
     parser.add_argument(
         "--max-files",

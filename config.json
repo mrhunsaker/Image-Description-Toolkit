@@ -121,12 +121,12 @@
       "supported_formats": "List of supported image file extensions. Add new formats here if needed."
     },
     "usage_examples": {
-      "basic": "python image_describer_optimized.py photos",
-      "with_style": "python image_describer_optimized.py photos --prompt-style artistic",
-      "with_model": "python image_describer_optimized.py photos --model llava:7b",
-      "memory_optimized": "python image_describer_optimized.py photos --model moondream --max-size 512",
-      "no_metadata": "python image_describer_optimized.py photos --no-metadata",
-      "custom_config": "python image_describer_optimized.py photos --config my_config.json"
+      "basic": "python image_describer.py photos",
+      "with_style": "python image_describer.py photos --prompt-style artistic",
+      "with_model": "python image_describer.py photos --model llava:7b",
+      "memory_optimized": "python image_describer.py photos --model moondream --max-size 512",
+      "no_metadata": "python image_describer.py photos --no-metadata",
+      "custom_config": "python image_describer.py photos --config my_config.json"
     }
   }
 } 

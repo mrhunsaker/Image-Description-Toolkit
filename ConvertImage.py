@@ -4,6 +4,10 @@ HEIC to JPG Converter
 
 This script converts HEIC/HEIF image files to JPG format.
 Supports both individual files and batch conversion of directories.
+
+Part of the ImageDescriber toolkit for AI-powered image analysis.
+Use this tool to convert HEIC images to JPG format before processing
+with the main ImageDescriber script.
 """
 
 import os
