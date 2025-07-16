@@ -1,0 +1,22 @@
+# GUI Requirements for Image Description Toolkit Windows App
+# Install with: pip install -r gui_requirements.txt
+
+# Core GUI framework
+PyQt6>=6.6.0
+PyQt6-Qt6>=6.6.0
+
+# Additional GUI utilities
+qtawesome>=1.3.0  # Icons for the interface
+darkdetect>=0.8.0  # Dark theme detection
+
+# Windows-specific utilities
+pywin32>=306  # Windows API access
+winshell>=0.6  # Windows shell integration
+
+# All existing requirements
+ollama>=0.3.0
+pillow>=10.0.0
+requests>=2.31.0
+
+# HEIC conversion support
+pillow-heif>=0.13.0
