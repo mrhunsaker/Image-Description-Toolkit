@@ -681,9 +681,10 @@ class ImageDescriptionGUI(QMainWindow):
         self.temperature_spin = QSpinBox()
         self.temperature_spin.setRange(0, 100)
         self.temperature_spin.setValue(10)  # 0.1 * 100
-        self.temperature_spin.setSuffix(" (0.%02d)")
+        self.temperature_spin.setSuffix(" (0.10)")
         self.temperature_spin.setAccessibleName("Temperature")
         self.temperature_spin.setAccessibleDescription("Controls randomness in responses. Lower = more consistent")
+        self.temperature_spin.valueChanged.connect(self.update_temperature_suffix)
         model_layout.addWidget(self.temperature_spin, 1, 1)
         
         # Num Predict
@@ -709,9 +710,10 @@ class ImageDescriptionGUI(QMainWindow):
         self.top_p_spin = QSpinBox()
         self.top_p_spin.setRange(10, 100)
         self.top_p_spin.setValue(90)  # 0.9 * 100
-        self.top_p_spin.setSuffix(" (0.%02d)")
+        self.top_p_spin.setSuffix(" (0.90)")
         self.top_p_spin.setAccessibleName("Top P")
         self.top_p_spin.setAccessibleDescription("Cumulative probability cutoff")
+        self.top_p_spin.valueChanged.connect(self.update_top_p_suffix)
         model_layout.addWidget(self.top_p_spin, 4, 1)
         
         # Repeat Penalty
@@ -719,9 +721,10 @@ class ImageDescriptionGUI(QMainWindow):
         self.repeat_penalty_spin = QSpinBox()
         self.repeat_penalty_spin.setRange(100, 200)
         self.repeat_penalty_spin.setValue(130)  # 1.3 * 100
-        self.repeat_penalty_spin.setSuffix(" (1.%02d)")
+        self.repeat_penalty_spin.setSuffix(" (1.30)")
         self.repeat_penalty_spin.setAccessibleName("Repeat Penalty")
         self.repeat_penalty_spin.setAccessibleDescription("Penalty for repeating tokens")
+        self.repeat_penalty_spin.valueChanged.connect(self.update_repeat_penalty_suffix)
         model_layout.addWidget(self.repeat_penalty_spin, 5, 1)
         
         layout.addWidget(model_group)
@@ -1003,6 +1006,36 @@ class ImageDescriptionGUI(QMainWindow):
             self.html_output_path.setText(file)
             self.status_bar.showMessage(f"HTML output: {file}")
             
+    def update_temperature_suffix(self, value):
+        """Update the temperature suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.temperature_spin.setSuffix(f" ({decimal_value:.2f})")
+        
+    def update_top_p_suffix(self, value):
+        """Update the top_p suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.top_p_spin.setSuffix(f" ({decimal_value:.2f})")
+        
+    def update_repeat_penalty_suffix(self, value):
+        """Update the repeat_penalty suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.repeat_penalty_spin.setSuffix(f" ({decimal_value:.2f})")
+        
+    def update_temperature_suffix(self, value):
+        """Update the temperature suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.temperature_spin.setSuffix(f" ({decimal_value:.2f})")
+        
+    def update_top_p_suffix(self, value):
+        """Update the top_p suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.top_p_spin.setSuffix(f" ({decimal_value:.2f})")
+        
+    def update_repeat_penalty_suffix(self, value):
+        """Update the repeat_penalty suffix to show actual decimal value"""
+        decimal_value = value / 100.0
+        self.repeat_penalty_spin.setSuffix(f" ({decimal_value:.2f})")
+        
     def update_quality_label(self, value):
         """Update the quality label when slider changes"""
         self.quality_label.setText(str(value))
