@@ -1,6 +1,6 @@
 {
+  "default_model": "moondream",
   "model_settings": {
-    "model": "moondream",
     "temperature": 0.1,
     "num_predict": 600,
     "top_k": 40,
@@ -18,10 +18,10 @@
     "colorful": "Give me a rich, vivid description emphasizing colors, lighting, and visual atmosphere. Focus on the palette, color relationships, and how colors contribute to the mood and composition."
   },
   "output_format": {
-    "include_timestamp": true,
+    "include_timestamp": false,
     "include_model_info": true,
-    "include_file_path": true,
-    "include_metadata": true,
+    "include_file_path": false,
+    "include_metadata": false,
     "separator": "-"
   },
   "available_models": {
@@ -70,7 +70,7 @@
   },
   "processing_options": {
     "default_max_image_size": 1024,
-    "default_batch_delay": 2.0,
+    "default_batch_delay": 2,
     "default_compression": true,
     "extract_metadata": true,
     "supported_formats": [
@@ -129,4 +129,4 @@
       "custom_config": "python image_describer.py photos --config my_config.json"
     }
   }
-} 
+}

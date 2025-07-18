@@ -266,11 +266,60 @@ class ImageDescriptionGUI(QMainWindow):
         # Load configuration after all UI elements are created
         self.load_config_to_ui()
         
+        # Connect UI elements to immediately update QSettings
+        self.connect_settings_signals()
+        
         # Create menu bar
         self.create_menu_bar()
         
         # Create status bar
         self.create_status_bar()
+        
+    def connect_settings_signals(self):
+        """Connect UI elements to immediately update QSettings when values change"""
+        # Settings tab controls
+        self.model_combo.currentTextChanged.connect(self.update_model_setting)
+        self.default_prompt_combo.currentTextChanged.connect(self.update_prompt_setting)
+        self.recursive_check.toggled.connect(self.update_recursive_setting)
+        self.default_max_size_spin.valueChanged.connect(self.update_max_size_setting)
+        self.default_batch_delay_spin.valueChanged.connect(self.update_batch_delay_setting)
+        self.quality_slider.valueChanged.connect(self.update_quality_setting)
+        self.html_full_details.toggled.connect(self.update_html_details_setting)
+        
+    def update_model_setting(self, value):
+        """Update model setting in QSettings immediately"""
+        self.settings.setValue('model', value)
+        self.settings.sync()
+        
+    def update_prompt_setting(self, value):
+        """Update prompt setting in QSettings immediately"""
+        self.settings.setValue('prompt_style', value)
+        self.settings.sync()
+        
+    def update_recursive_setting(self, value):
+        """Update recursive setting in QSettings immediately"""
+        self.settings.setValue('recursive', value)
+        self.settings.sync()
+        
+    def update_max_size_setting(self, value):
+        """Update max size setting in QSettings immediately"""
+        self.settings.setValue('max_size', value)
+        self.settings.sync()
+        
+    def update_batch_delay_setting(self, value):
+        """Update batch delay setting in QSettings immediately"""
+        self.settings.setValue('batch_delay', value)
+        self.settings.sync()
+        
+    def update_quality_setting(self, value):
+        """Update quality setting in QSettings immediately"""
+        self.settings.setValue('jpeg_quality', value)
+        self.settings.sync()
+        
+    def update_html_details_setting(self, value):
+        """Update HTML details setting in QSettings immediately"""
+        self.settings.setValue('html_full_details', value)
+        self.settings.sync()
         
     def create_menu_bar(self):
         """Create the application menu bar"""
@@ -343,47 +392,7 @@ class ImageDescriptionGUI(QMainWindow):
         
         layout.addWidget(file_group)
         
-        # Processing options section
-        options_group = QGroupBox("Processing Options")
-        options_layout = QGridLayout(options_group)
-        
-        # Model selection
-        options_layout.addWidget(QLabel("AI Model:"), 0, 0)
-        self.model_combo = QComboBox()
-        self.model_combo.setAccessibleName("AI Model Selection")
-        self.model_combo.setAccessibleDescription("Select the AI model to use for image description")
-        self.model_combo.addItems(["moondream", "llama3.2-vision", "llava", "llava:7b"])
-        options_layout.addWidget(self.model_combo, 0, 1)
-        
-        # Prompt style selection
-        options_layout.addWidget(QLabel("Description Style:"), 1, 0)
-        self.prompt_combo = QComboBox()
-        self.prompt_combo.setAccessibleName("Description Style Selection")
-        self.prompt_combo.setAccessibleDescription("Select the style of image description")
-        self.prompt_combo.addItems(["detailed", "concise", "Narrative", "artistic", "technical", "colorful"])
-        options_layout.addWidget(self.prompt_combo, 1, 1)
-        
-        # Max image size
-        options_layout.addWidget(QLabel("Max Image Size:"), 2, 0)
-        self.max_size_spin = QSpinBox()
-        self.max_size_spin.setRange(256, 4096)
-        self.max_size_spin.setValue(1024)
-        self.max_size_spin.setSuffix(" pixels")
-        self.max_size_spin.setAccessibleName("Maximum Image Size")
-        self.max_size_spin.setAccessibleDescription("Maximum image dimension in pixels")
-        options_layout.addWidget(self.max_size_spin, 2, 1)
-        
-        # Batch delay
-        options_layout.addWidget(QLabel("Batch Delay:"), 3, 0)
-        self.batch_delay_spin = QSpinBox()
-        self.batch_delay_spin.setRange(0, 10)
-        self.batch_delay_spin.setValue(2)
-        self.batch_delay_spin.setSuffix(" seconds")
-        self.batch_delay_spin.setAccessibleName("Batch Processing Delay")
-        self.batch_delay_spin.setAccessibleDescription("Delay between processing images in seconds")
-        options_layout.addWidget(self.batch_delay_spin, 3, 1)
-        
-        layout.addWidget(options_group)
+        # Note: Processing options moved to Settings tab to avoid duplication
         
         # Processing controls
         controls_layout = QHBoxLayout()
@@ -659,53 +668,61 @@ class ImageDescriptionGUI(QMainWindow):
         model_group = QGroupBox("Model Settings")
         model_layout = QGridLayout(model_group)
         
+        # AI Model selection
+        model_layout.addWidget(QLabel("AI Model:"), 0, 0)
+        self.model_combo = QComboBox()
+        self.model_combo.setAccessibleName("AI Model Selection")
+        self.model_combo.setAccessibleDescription("Select the AI model to use for image description")
+        self.model_combo.addItems(["moondream", "llama3.2-vision", "llava", "llava:7b"])
+        model_layout.addWidget(self.model_combo, 0, 1)
+        
         # Temperature
-        model_layout.addWidget(QLabel("Temperature:"), 0, 0)
+        model_layout.addWidget(QLabel("Temperature:"), 1, 0)
         self.temperature_spin = QSpinBox()
         self.temperature_spin.setRange(0, 100)
         self.temperature_spin.setValue(10)  # 0.1 * 100
         self.temperature_spin.setSuffix(" (0.%02d)")
         self.temperature_spin.setAccessibleName("Temperature")
         self.temperature_spin.setAccessibleDescription("Controls randomness in responses. Lower = more consistent")
-        model_layout.addWidget(self.temperature_spin, 0, 1)
+        model_layout.addWidget(self.temperature_spin, 1, 1)
         
         # Num Predict
-        model_layout.addWidget(QLabel("Max Tokens:"), 1, 0)
+        model_layout.addWidget(QLabel("Max Tokens:"), 2, 0)
         self.num_predict_spin = QSpinBox()
         self.num_predict_spin.setRange(50, 2000)
         self.num_predict_spin.setValue(600)
         self.num_predict_spin.setAccessibleName("Maximum Tokens")
         self.num_predict_spin.setAccessibleDescription("Maximum number of tokens to generate")
-        model_layout.addWidget(self.num_predict_spin, 1, 1)
+        model_layout.addWidget(self.num_predict_spin, 2, 1)
         
         # Top K
-        model_layout.addWidget(QLabel("Top K:"), 2, 0)
+        model_layout.addWidget(QLabel("Top K:"), 3, 0)
         self.top_k_spin = QSpinBox()
         self.top_k_spin.setRange(1, 100)
         self.top_k_spin.setValue(40)
         self.top_k_spin.setAccessibleName("Top K")
         self.top_k_spin.setAccessibleDescription("Number of top tokens to consider")
-        model_layout.addWidget(self.top_k_spin, 2, 1)
+        model_layout.addWidget(self.top_k_spin, 3, 1)
         
         # Top P
-        model_layout.addWidget(QLabel("Top P:"), 3, 0)
+        model_layout.addWidget(QLabel("Top P:"), 4, 0)
         self.top_p_spin = QSpinBox()
         self.top_p_spin.setRange(10, 100)
         self.top_p_spin.setValue(90)  # 0.9 * 100
         self.top_p_spin.setSuffix(" (0.%02d)")
         self.top_p_spin.setAccessibleName("Top P")
         self.top_p_spin.setAccessibleDescription("Cumulative probability cutoff")
-        model_layout.addWidget(self.top_p_spin, 3, 1)
+        model_layout.addWidget(self.top_p_spin, 4, 1)
         
         # Repeat Penalty
-        model_layout.addWidget(QLabel("Repeat Penalty:"), 4, 0)
+        model_layout.addWidget(QLabel("Repeat Penalty:"), 5, 0)
         self.repeat_penalty_spin = QSpinBox()
         self.repeat_penalty_spin.setRange(100, 200)
         self.repeat_penalty_spin.setValue(130)  # 1.3 * 100
         self.repeat_penalty_spin.setSuffix(" (1.%02d)")
         self.repeat_penalty_spin.setAccessibleName("Repeat Penalty")
         self.repeat_penalty_spin.setAccessibleDescription("Penalty for repeating tokens")
-        model_layout.addWidget(self.repeat_penalty_spin, 4, 1)
+        model_layout.addWidget(self.repeat_penalty_spin, 5, 1)
         
         layout.addWidget(model_group)
         
@@ -1034,10 +1051,10 @@ class ImageDescriptionGUI(QMainWindow):
         self.processing_thread = ProcessingThread(
             folder,
             self.model_combo.currentText(),
-            self.prompt_combo.currentText(),
+            self.default_prompt_combo.currentText(),
             self.recursive_check.isChecked(),
-            self.max_size_spin.value(),
-            self.batch_delay_spin.value()
+            self.default_max_size_spin.value(),
+            self.default_batch_delay_spin.value()
         )
         
         self.processing_thread.progress_updated.connect(self.update_processing_progress)
@@ -1229,56 +1246,156 @@ class ImageDescriptionGUI(QMainWindow):
         self.results_text.setTextCursor(cursor)
             
     def load_settings(self):
-        """Load settings from QSettings"""
-        # Load window geometry
+        """Load settings with hierarchy: hard-coded defaults → config.json → QSettings (Registry)"""
+        # Load window geometry from QSettings
         geometry = self.settings.value('geometry')
         if geometry:
             self.restoreGeometry(geometry)
             
-        # Load other settings
-        self.model_combo.setCurrentText(self.settings.value('model', 'moondream'))
-        self.prompt_combo.setCurrentText(self.settings.value('prompt_style', 'detailed'))
-        self.recursive_check.setChecked(self.settings.value('recursive', False, type=bool))
-        self.max_size_spin.setValue(self.settings.value('max_size', 1024, type=int))
-        self.batch_delay_spin.setValue(self.settings.value('batch_delay', 2, type=int))
-        self.quality_slider.setValue(self.settings.value('jpeg_quality', 95, type=int))
-        self.html_full_details.setChecked(self.settings.value('html_full_details', False, type=bool))
+        # Load configuration defaults from config.json
+        config_defaults = self.load_config_defaults()
+        
+        # Load settings with hierarchy: config.json defaults, then QSettings overrides
+        self.model_combo.setCurrentText(
+            self.settings.value('model', config_defaults.get('default_model', 'moondream'))
+        )
+        self.default_prompt_combo.setCurrentText(
+            self.settings.value('prompt_style', config_defaults.get('default_prompt_style', 'detailed'))
+        )
+        self.recursive_check.setChecked(
+            self.settings.value('recursive', False, type=bool)
+        )
+        self.default_max_size_spin.setValue(
+            self.settings.value('max_size', config_defaults.get('default_max_image_size', 1024), type=int)
+        )
+        self.default_batch_delay_spin.setValue(
+            self.settings.value('batch_delay', config_defaults.get('default_batch_delay', 2), type=int)
+        )
+        self.quality_slider.setValue(
+            self.settings.value('jpeg_quality', 95, type=int)
+        )
+        self.html_full_details.setChecked(
+            self.settings.value('html_full_details', False, type=bool)
+        )
+        
+        # Update quality label
+        self.update_quality_label(self.quality_slider.value())
         
     def save_settings(self):
-        """Save settings to QSettings"""
+        """Save settings to QSettings (Registry) - user session preferences"""
         # Save window geometry
         self.settings.setValue('geometry', self.saveGeometry())
         
-        # Save other settings
+        # Save user preferences that override config.json
         self.settings.setValue('model', self.model_combo.currentText())
-        self.settings.setValue('prompt_style', self.prompt_combo.currentText())
+        self.settings.setValue('prompt_style', self.default_prompt_combo.currentText())
         self.settings.setValue('recursive', self.recursive_check.isChecked())
-        self.settings.setValue('max_size', self.max_size_spin.value())
-        self.settings.setValue('batch_delay', self.batch_delay_spin.value())
+        self.settings.setValue('max_size', self.default_max_size_spin.value())
+        self.settings.setValue('batch_delay', self.default_batch_delay_spin.value())
         self.settings.setValue('jpeg_quality', self.quality_slider.value())
         self.settings.setValue('html_full_details', self.html_full_details.isChecked())
         
-        QMessageBox.information(self, "Settings", "Settings saved successfully!")
+        # Update immediately
+        self.settings.sync()
+        
+    def load_config_defaults(self):
+        """Load default settings from config.json with hard-coded fallbacks"""
+        defaults = {
+            'default_model': 'moondream',
+            'default_prompt_style': 'detailed',
+            'default_max_image_size': 1024,
+            'default_batch_delay': 2,
+            'temperature': 0.1,
+            'num_predict': 600,
+            'top_k': 40,
+            'top_p': 0.9,
+            'repeat_penalty': 1.3,
+            'include_timestamp': True,
+            'include_model_info': True,
+            'include_file_path': True,
+            'include_metadata': True,
+            'separator': '---',
+            'default_compression': True,
+            'extract_metadata': True,
+            'supported_formats': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'heic']
+        }
+        
+        try:
+            config_path = Path("config.json")
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    
+                # Update defaults with config.json values
+                model_settings = config.get('model_settings', {})
+                processing_options = config.get('processing_options', {})
+                output_format = config.get('output_format', {})
+                
+                # Override defaults with config values
+                if 'default_model' in config:
+                    defaults['default_model'] = config['default_model']
+                if 'default_prompt_style' in config:
+                    defaults['default_prompt_style'] = config['default_prompt_style']
+                    
+                # Model settings
+                defaults.update({
+                    'temperature': model_settings.get('temperature', defaults['temperature']),
+                    'num_predict': model_settings.get('num_predict', defaults['num_predict']),
+                    'top_k': model_settings.get('top_k', defaults['top_k']),
+                    'top_p': model_settings.get('top_p', defaults['top_p']),
+                    'repeat_penalty': model_settings.get('repeat_penalty', defaults['repeat_penalty'])
+                })
+                
+                # Processing options
+                defaults.update({
+                    'default_max_image_size': processing_options.get('default_max_image_size', defaults['default_max_image_size']),
+                    'default_batch_delay': processing_options.get('default_batch_delay', defaults['default_batch_delay']),
+                    'default_compression': processing_options.get('default_compression', defaults['default_compression']),
+                    'extract_metadata': processing_options.get('extract_metadata', defaults['extract_metadata'])
+                })
+                
+                # Output format
+                defaults.update({
+                    'include_timestamp': output_format.get('include_timestamp', defaults['include_timestamp']),
+                    'include_model_info': output_format.get('include_model_info', defaults['include_model_info']),
+                    'include_file_path': output_format.get('include_file_path', defaults['include_file_path']),
+                    'include_metadata': output_format.get('include_metadata', defaults['include_metadata']),
+                    'separator': output_format.get('separator', defaults['separator'])
+                })
+                
+                # Supported formats
+                if 'supported_formats' in processing_options:
+                    defaults['supported_formats'] = processing_options['supported_formats']
+                    
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            # Use hard-coded defaults if config.json has issues
+            pass
+        except Exception as e:
+            # Use hard-coded defaults for any other errors
+            pass
+            
+        return defaults
         
     def reset_settings(self):
-        """Reset settings to defaults"""
+        """Reset QSettings to use config.json defaults"""
+        config_defaults = self.load_config_defaults()
+        
         reply = QMessageBox.question(
             self, 
             "Reset Settings", 
-            "Are you sure you want to reset all settings to default values?",
+            "Are you sure you want to reset user preferences? This will use the config.json defaults.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.model_combo.setCurrentText('moondream')
-            self.prompt_combo.setCurrentText('detailed')
-            self.recursive_check.setChecked(False)
-            self.max_size_spin.setValue(1024)
-            self.batch_delay_spin.setValue(2)
-            self.quality_slider.setValue(95)
-            self.html_full_details.setChecked(False)
+            # Clear all QSettings so config.json defaults are used
+            self.settings.clear()
+            self.settings.sync()
             
-            QMessageBox.information(self, "Settings", "Settings reset to defaults!")
+            # Reload the UI with the config defaults
+            self.load_settings()
+            
+            QMessageBox.information(self, "Settings", "User preferences reset to config.json defaults!")
             
     def show_about(self):
         """Show about dialog"""
@@ -1329,8 +1446,9 @@ class ImageDescriptionGUI(QMainWindow):
         
     def closeEvent(self, event):
         """Handle application close event"""
-        # Save settings before closing
-        self.save_settings()
+        # Save window geometry and final settings
+        self.settings.setValue('geometry', self.saveGeometry())
+        self.settings.sync()
         
         # Stop any running threads
         if self.processing_thread and self.processing_thread.isRunning():
@@ -1408,88 +1526,98 @@ class ImageDescriptionGUI(QMainWindow):
             return False, f"Ollama connection error: {str(e)}. Ensure Ollama is running."
     
     def load_config_to_ui(self):
-        """Load configuration from config.json to UI elements"""
-        try:
-            with open('config.json', 'r') as f:
-                config = json.load(f)
-            
-            # Model settings - only load if UI elements exist
-            model_settings = config.get('model_settings', {})
-            if hasattr(self, 'temperature_spin'):
-                temp_value = model_settings.get('temperature', 0.1)
-                self.temperature_spin.setValue(int(temp_value * 100))
-            if hasattr(self, 'num_predict_spin'):
-                self.num_predict_spin.setValue(int(model_settings.get('num_predict', 600)))
-            if hasattr(self, 'top_k_spin'):
-                self.top_k_spin.setValue(int(model_settings.get('top_k', 40)))
-            if hasattr(self, 'top_p_spin'):
-                top_p_value = model_settings.get('top_p', 0.9)
-                self.top_p_spin.setValue(int(top_p_value * 100))
-            if hasattr(self, 'repeat_penalty_spin'):
-                penalty_value = model_settings.get('repeat_penalty', 1.3)
-                self.repeat_penalty_spin.setValue(int(penalty_value * 100))
-            
-            # Prompt settings
-            if hasattr(self, 'default_prompt_combo'):
-                self.default_prompt_combo.setCurrentText(config.get('default_prompt_style', 'detailed'))
-            if hasattr(self, 'prompt_template_edit'):
-                self.prompt_template_edit.setPlainText(config.get('prompt_template', ''))
-            
-            # Format prompt variations as JSON for editing
-            if hasattr(self, 'prompt_variations_edit'):
-                prompt_variations = config.get('prompt_variations', {})
-                self.prompt_variations_edit.setPlainText(json.dumps(prompt_variations, indent=2))
-            
-            # Output format
-            output_format = config.get('output_format', {})
-            if hasattr(self, 'include_timestamp_check'):
-                self.include_timestamp_check.setChecked(output_format.get('include_timestamp', True))
-            if hasattr(self, 'include_model_info_check'):
-                self.include_model_info_check.setChecked(output_format.get('include_model_info', True))
-            if hasattr(self, 'include_file_path_check'):
-                self.include_file_path_check.setChecked(output_format.get('include_file_path', True))
-            if hasattr(self, 'include_metadata_check'):
-                self.include_metadata_check.setChecked(output_format.get('include_metadata', True))
-            if hasattr(self, 'separator_edit'):
-                self.separator_edit.setText(output_format.get('separator', '---'))
-            
-            # Processing options
-            processing_options = config.get('processing_options', {})
-            if hasattr(self, 'default_max_size_spin'):
-                self.default_max_size_spin.setValue(int(processing_options.get('default_max_image_size', 1024)))
-            if hasattr(self, 'default_batch_delay_spin'):
-                self.default_batch_delay_spin.setValue(int(processing_options.get('default_batch_delay', 2)))
-            if hasattr(self, 'default_compression_check'):
-                self.default_compression_check.setChecked(processing_options.get('default_compression', True))
-            if hasattr(self, 'extract_metadata_check'):
-                self.extract_metadata_check.setChecked(processing_options.get('extract_metadata', True))
-            
-            # Supported formats
-            if hasattr(self, 'supported_formats_edit'):
-                supported_formats = processing_options.get('supported_formats', [])
-                self.supported_formats_edit.setText(', '.join(supported_formats))
-            
-            # Available models info
-            if hasattr(self, 'models_info_text'):
-                available_models = config.get('available_models', {})
-                models_text = "Available Models:\n"
-                for model_name, model_info in available_models.items():
-                    models_text += f"• {model_name}: {model_info.get('description', 'No description')}\n"
-                self.models_info_text.setPlainText(models_text)
-            
-        except FileNotFoundError:
-            # Only show warning if we have the new UI elements
-            if hasattr(self, 'temperature_spin'):
-                QMessageBox.warning(self, "Configuration", "config.json not found. Using default values.")
-        except json.JSONDecodeError:
-            if hasattr(self, 'temperature_spin'):
-                QMessageBox.warning(self, "Configuration", "Invalid JSON in config.json. Using default values.")
-        except Exception as e:
-            if hasattr(self, 'temperature_spin'):
-                QMessageBox.warning(self, "Configuration", f"Error loading configuration: {str(e)}")
-            else:
-                # Silent fail if UI elements don't exist yet
-                pass
+        """Load configuration with hierarchy: hard-coded defaults → config.json → QSettings (Registry)"""
+        # Get defaults from config.json with hard-coded fallbacks
+        config_defaults = self.load_config_defaults()
+        
+        # Load settings UI elements if they exist (Settings tab)
+        if hasattr(self, 'temperature_spin'):
+            temp_value = config_defaults.get('temperature', 0.1)
+            self.temperature_spin.setValue(int(temp_value * 100))
+        if hasattr(self, 'num_predict_spin'):
+            self.num_predict_spin.setValue(int(config_defaults.get('num_predict', 600)))
+        if hasattr(self, 'top_k_spin'):
+            self.top_k_spin.setValue(int(config_defaults.get('top_k', 40)))
+        if hasattr(self, 'top_p_spin'):
+            top_p_value = config_defaults.get('top_p', 0.9)
+            self.top_p_spin.setValue(int(top_p_value * 100))
+        if hasattr(self, 'repeat_penalty_spin'):
+            penalty_value = config_defaults.get('repeat_penalty', 1.3)
+            self.repeat_penalty_spin.setValue(int(penalty_value * 100))
+        
+        # Prompt settings
+        if hasattr(self, 'default_prompt_combo'):
+            self.default_prompt_combo.setCurrentText(config_defaults.get('default_prompt_style', 'detailed'))
+        if hasattr(self, 'prompt_template_edit'):
+            # Try to load from config.json
+            try:
+                config_path = Path("config.json")
+                if config_path.exists():
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        self.prompt_template_edit.setPlainText(config.get('prompt_template', ''))
+                else:
+                    self.prompt_template_edit.setPlainText('')
+            except:
+                self.prompt_template_edit.setPlainText('')
+        
+        # Format prompt variations as JSON for editing
+        if hasattr(self, 'prompt_variations_edit'):
+            try:
+                config_path = Path("config.json")
+                if config_path.exists():
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        prompt_variations = config.get('prompt_variations', {})
+                        self.prompt_variations_edit.setPlainText(json.dumps(prompt_variations, indent=2))
+                else:
+                    self.prompt_variations_edit.setPlainText('{}')
+            except:
+                self.prompt_variations_edit.setPlainText('{}')
+        
+        # Output format
+        if hasattr(self, 'include_timestamp_check'):
+            self.include_timestamp_check.setChecked(config_defaults.get('include_timestamp', True))
+        if hasattr(self, 'include_model_info_check'):
+            self.include_model_info_check.setChecked(config_defaults.get('include_model_info', True))
+        if hasattr(self, 'include_file_path_check'):
+            self.include_file_path_check.setChecked(config_defaults.get('include_file_path', True))
+        if hasattr(self, 'include_metadata_check'):
+            self.include_metadata_check.setChecked(config_defaults.get('include_metadata', True))
+        if hasattr(self, 'separator_edit'):
+            self.separator_edit.setText(config_defaults.get('separator', '---'))
+        
+        # Processing options
+        if hasattr(self, 'default_max_size_spin'):
+            self.default_max_size_spin.setValue(int(config_defaults.get('default_max_image_size', 1024)))
+        if hasattr(self, 'default_batch_delay_spin'):
+            self.default_batch_delay_spin.setValue(int(config_defaults.get('default_batch_delay', 2)))
+        if hasattr(self, 'default_compression_check'):
+            self.default_compression_check.setChecked(config_defaults.get('default_compression', True))
+        if hasattr(self, 'extract_metadata_check'):
+            self.extract_metadata_check.setChecked(config_defaults.get('extract_metadata', True))
+        
+        # Supported formats
+        if hasattr(self, 'supported_formats_edit'):
+            supported_formats = config_defaults.get('supported_formats', [])
+            self.supported_formats_edit.setText(', '.join(supported_formats))
+        
+        # Available models info
+        if hasattr(self, 'models_info_text'):
+            try:
+                config_path = Path("config.json")
+                if config_path.exists():
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        available_models = config.get('available_models', {})
+                        models_text = "Available Models:\n"
+                        for model_name, model_info in available_models.items():
+                            models_text += f"• {model_name}: {model_info.get('description', 'No description')}\n"
+                        self.models_info_text.setPlainText(models_text)
+                else:
+                    self.models_info_text.setPlainText("No config.json file found. Using default model settings.")
+            except:
+                self.models_info_text.setPlainText("Error loading model information from config.json.")
     
     def save_config_file(self):
         """Save current UI settings to config.json"""
@@ -1564,24 +1692,34 @@ class ImageDescriptionGUI(QMainWindow):
     
     def load_config_file(self):
         """Reload configuration from config.json"""
-        self.load_config_to_ui()
-        if hasattr(self, 'temperature_spin'):
-            QMessageBox.information(self, "Configuration", "Configuration loaded from config.json")
+        try:
+            # Reload the configuration to UI
+            self.load_config_to_ui()
+            
+            # Also reload the main settings to pick up any changes
+            self.load_settings()
+            
+            if hasattr(self, 'temperature_spin'):
+                QMessageBox.information(self, "Configuration", "Configuration reloaded from config.json")
+            else:
+                QMessageBox.information(self, "Configuration", "Configuration reloaded from config.json")
+        except Exception as e:
+            QMessageBox.warning(self, "Configuration", f"Error loading configuration: {str(e)}")
     
     def reset_config_file(self):
-        """Reset all settings to default values"""
+        """Reset all settings to hard-coded default values"""
         if not hasattr(self, 'temperature_spin'):
             QMessageBox.warning(self, "Configuration", "Advanced settings not available in this interface.")
             return
             
         reply = QMessageBox.question(
             self, "Reset Configuration", 
-            "Are you sure you want to reset all settings to default values?",
+            "Are you sure you want to reset all settings to hard-coded default values?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            # Set default values
+            # Set hard-coded default values
             self.temperature_spin.setValue(10)  # 0.1
             self.num_predict_spin.setValue(600)
             self.top_k_spin.setValue(40)
@@ -1590,7 +1728,7 @@ class ImageDescriptionGUI(QMainWindow):
             
             self.default_prompt_combo.setCurrentText('detailed')
             self.prompt_template_edit.clear()
-            self.prompt_variations_edit.clear()
+            self.prompt_variations_edit.setPlainText('{}')
             
             self.include_timestamp_check.setChecked(True)
             self.include_model_info_check.setChecked(True)
@@ -1604,7 +1742,16 @@ class ImageDescriptionGUI(QMainWindow):
             self.extract_metadata_check.setChecked(True)
             self.supported_formats_edit.setText('jpg, jpeg, png, gif, bmp, tiff, webp, heic')
             
-            QMessageBox.information(self, "Configuration", "All settings reset to default values")
+            # Reset main UI elements to defaults
+            self.model_combo.setCurrentText('moondream')
+            self.default_prompt_combo.setCurrentText('detailed')
+            self.recursive_check.setChecked(False)
+            self.default_max_size_spin.setValue(1024)
+            self.default_batch_delay_spin.setValue(2)
+            self.quality_slider.setValue(95)
+            self.html_full_details.setChecked(False)
+            
+            QMessageBox.information(self, "Configuration", "All settings reset to hard-coded default values")
     
 def main():
     """Main application entry point"""
