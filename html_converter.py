@@ -3,7 +3,7 @@
 HTML Converter Wrapper
 
 This module provides a simple class-based interface for the HTML conversion
-functionality, making it easy to integrate with the GUI application.
+functionality, making it easy to integrate with other applications.
 """
 
 import sys
