@@ -35,19 +35,13 @@ A comprehensive Python toolkit for processing images using Ollama's vision model
    pip install -r requirements.txt
    ```
 
-3. For HEIC conversion support (optional):
-   ```bash
-   pip install -r convert_requirements.txt
-   ```
-
 ## Project Structure
 
 - `image_describer.py` - Main image description script
 - `descriptions_to_html.py` - HTML converter for description files
 - `ConvertImage.py` - HEIC to JPG converter utility
 - `config.json` - Configuration file with model settings and prompts
-- `requirements.txt` - Python dependencies for image description
-- `convert_requirements.txt` - Additional dependencies for HEIC conversion
+- `requirements.txt` - Python dependencies for all functionality
 - `HTML_README.md` - Documentation for the HTML converter tool
 
 ## Usage

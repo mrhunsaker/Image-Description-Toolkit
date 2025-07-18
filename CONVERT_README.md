@@ -23,7 +23,7 @@ A Python script to convert HEIC/HEIF image files to JPG format. Supports both in
 
 1. Install the required packages:
 ```bash
-pip install -r convert_requirements.txt
+pip install -r requirements.txt
 ```
 
 Or install manually:

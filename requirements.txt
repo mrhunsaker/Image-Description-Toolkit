@@ -1,3 +1,8 @@
+# Image Description Toolkit - Complete Dependencies
+# Core dependencies for image description functionality
 ollama>=0.3.0
 pillow>=10.0.0
 requests>=2.31.0
+
+# HEIC/HEIF conversion support (optional but recommended)
+pillow-heif>=0.13.0
