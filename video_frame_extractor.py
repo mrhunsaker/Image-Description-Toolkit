@@ -16,7 +16,7 @@ import logging
 from datetime import datetime
 
 class VideoFrameExtractor:
-    def __init__(self, config_file: str = "frame_extractor_config.json"):
+    def __init__(self, config_file: str = "video_frame_extractor_config.json"):
         self.supported_formats = {'.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
         self.config = self.load_config(config_file)
         self.setup_logging()
@@ -71,12 +71,24 @@ class VideoFrameExtractor:
     
     def create_default_config(self, config_file: str) -> dict:
         """Create a default configuration file and return the config"""
+        
+        # Use workflow output directory by default
+        default_output_dir = "extracted_frames"
+        try:
+            from workflow_utils import WorkflowConfig
+            config = WorkflowConfig()
+            workflow_output_dir = config.get_step_output_dir("video_extraction", create=False)
+            default_output_dir = str(workflow_output_dir)
+        except ImportError:
+            # workflow_utils not available, use default
+            pass
+        
         default_config = {
             "extraction_mode": "time_interval",
             "time_interval_seconds": 5.0,
             "scene_change_threshold": 30.0,
             "min_scene_duration_seconds": 1.0,
-            "output_directory": "extracted_frames",
+            "output_directory": default_output_dir,
             "preserve_directory_structure": False,
             "image_quality": 95,
             "resize_width": None,
@@ -437,8 +449,8 @@ class VideoFrameExtractor:
 def main():
     parser = argparse.ArgumentParser(description="Extract frames from video files")
     parser.add_argument("input", help="Input video file or directory")
-    parser.add_argument("-c", "--config", default="frame_extractor_config.json",
-                       help="Path to config file (default: frame_extractor_config.json)")
+    parser.add_argument("-c", "--config", default="video_frame_extractor_config.json",
+                       help="Path to config file (default: video_frame_extractor_config.json)")
     
     # Extraction mode options (mutually exclusive)
     mode_group = parser.add_mutually_exclusive_group()

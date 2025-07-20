@@ -47,7 +47,8 @@ class ImageDescriber:
     
     def __init__(self, model_name: str = None, max_image_size: int = 1024, 
                  enable_compression: bool = True, batch_delay: float = 2.0, 
-                 config_file: str = "config.json", prompt_style: str = "detailed"):
+                 config_file: str = "image_describer_config.json", prompt_style: str = "detailed",
+                 output_dir: str = None):
         """
         Initialize the ImageDescriber
         
@@ -58,6 +59,7 @@ class ImageDescriber:
             batch_delay: Delay between processing images to prevent memory buildup
             config_file: Path to the JSON configuration file
             prompt_style: Style of prompt to use (detailed, concise, artistic, technical)
+            output_dir: Custom output directory (default: same as input directory)
         """
         # Load configuration first
         self.config = self.load_config(config_file)
@@ -72,6 +74,7 @@ class ImageDescriber:
         self.enable_compression = enable_compression
         self.batch_delay = batch_delay
         self.prompt_style = prompt_style
+        self.output_dir = output_dir  # Custom output directory
         
         # Set supported formats from config
         self.supported_formats = set(self.config.get('processing_options', {}).get('supported_formats', 
@@ -370,8 +373,23 @@ class ImageDescriber:
             logger.error(f"Path is not a directory: {directory_path}")
             return
         
-        # Create output file path
-        output_file = directory_path / "image_descriptions.txt"
+        # Create output file path - use custom output dir or workflow structure
+        if self.output_dir:
+            # User specified custom output directory
+            output_dir = Path(self.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_file = output_dir / "image_descriptions.txt"
+        else:
+            # Use workflow output structure
+            try:
+                from workflow_utils import WorkflowConfig
+                config = WorkflowConfig()
+                output_dir = config.get_step_output_dir("image_description", create=True)
+                output_file = output_dir / "image_descriptions.txt"
+                logger.info(f"Using workflow output directory: {output_dir}")
+            except ImportError:
+                # Fallback to local directory if workflow_utils not available
+                output_file = directory_path / "image_descriptions.txt"
         
         # Initialize the output file with a header
         try:
@@ -701,7 +719,7 @@ class ImageDescriber:
         return "\n".join(lines)
 
     # ...existing code...
-def get_default_prompt_style(config_file: str = "config.json") -> str:
+def get_default_prompt_style(config_file: str = "image_describer_config.json") -> str:
     """
     Get the default prompt style from configuration file
     
@@ -735,7 +753,7 @@ def get_default_prompt_style(config_file: str = "config.json") -> str:
     return "detailed"
 
 
-def get_available_prompt_styles(config_file: str = "config.json") -> list:
+def get_available_prompt_styles(config_file: str = "image_describer_config.json") -> list:
     """
     Get available prompt styles from configuration file
     
@@ -799,7 +817,7 @@ Configuration:
         "--model",
         type=str,
         default=None,
-        help="Ollama vision model to use (default: from config.json)"
+        help="Ollama vision model to use (default: from image_describer_config.json)"
     )
     parser.add_argument(
         "--recursive",
@@ -836,8 +854,13 @@ Configuration:
     parser.add_argument(
         "--config",
         type=str,
-        default="config.json",
-        help="Path to JSON configuration file (default: config.json)"
+        default="image_describer_config.json",
+        help="Path to JSON configuration file (default: image_describer_config.json)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="Output directory for description file (default: workflow_output/descriptions/)"
     )
     parser.add_argument(
         "--prompt-style",
@@ -868,7 +891,8 @@ Configuration:
         enable_compression=not args.no_compression,
         batch_delay=args.batch_delay,
         config_file=args.config,
-        prompt_style=args.prompt_style
+        prompt_style=args.prompt_style,
+        output_dir=args.output_dir
     )
     
     # Override metadata extraction if disabled via command line

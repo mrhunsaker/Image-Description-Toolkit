@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 HEIC to JPG Converter
 
@@ -10,11 +11,16 @@ Use this tool to convert HEIC images to JPG format before processing
 with the main ImageDescriber script.
 """
 
-import os
 import sys
+import os
 import argparse
 from pathlib import Path
 from PIL import Image
+
+# Set UTF-8 encoding for console output on Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
 import pillow_heif
 
 # Register HEIF opener with PIL
@@ -79,7 +85,7 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     
     Args:
         directory_path: Path to the directory containing HEIC files
-        output_directory: Output directory (default: creates 'converted' subdirectory)
+        output_directory: Output directory (default: workflow_output/converted_images/)
         recursive: Whether to process subdirectories recursively
         quality: JPEG quality (1-100, default 95)
         keep_metadata: Whether to preserve metadata (default True)
@@ -99,7 +105,15 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     
     # Set up output directory
     if output_directory is None:
-        output_directory = directory_path / "converted"
+        # Use workflow output directory
+        try:
+            from workflow_utils import WorkflowConfig
+            config = WorkflowConfig()
+            output_directory = config.get_step_output_dir("image_conversion", create=True)
+            print(f"📁 Using workflow output directory: {output_directory}")
+        except ImportError:
+            # Fallback if workflow_utils not available
+            output_directory = directory_path / "converted"
     else:
         output_directory = Path(output_directory)
     
@@ -114,10 +128,10 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     heic_files.extend(directory_path.glob(heif_pattern))
     
     if not heic_files:
-        print(f"📁 No HEIC/HEIF files found in {directory_path}")
+        print(f"No HEIC/HEIF files found in {directory_path}")
         return 0, 0
     
-    print(f"🔍 Found {len(heic_files)} HEIC/HEIF files to convert")
+    print(f"Found {len(heic_files)} HEIC/HEIF files to convert")
     
     successful = 0
     failed = 0
