@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Descriptions to HTML Converter
 
@@ -27,6 +28,13 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 import html
+import sys
+
+# Set UTF-8 encoding for console output on Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
 
 
 class DescriptionEntry:
@@ -119,9 +127,32 @@ class DescriptionsParser:
             
             for section in sections:
                 section = section.strip()
-                if not section or section.startswith('Image Descriptions') or section.startswith('='):
+                if not section:
                     continue
                 
+                # Check if this section contains the header
+                if section.startswith('Image Descriptions') or section.startswith('='):
+                    # This section might contain both header and first entry
+                    # Look for the actual entry part after the header
+                    lines = section.split('\n')
+                    entry_start = -1
+                    
+                    # Find where the entry starts (look for "File:" line)
+                    for i, line in enumerate(lines):
+                        if line.strip().startswith('File:'):
+                            entry_start = i
+                            break
+                    
+                    if entry_start != -1:
+                        # Extract just the entry part
+                        entry_lines = lines[entry_start:]
+                        entry_section = '\n'.join(entry_lines)
+                        entry = self._parse_section(entry_section)
+                        if entry and entry.filename:
+                            self.entries.append(entry)
+                    continue
+                
+                # Regular entry section
                 entry = self._parse_section(section)
                 if entry and entry.filename:
                     self.entries.append(entry)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Comprehensive Test Suite for Image Description Toolkit
 
@@ -21,6 +22,12 @@ import time
 import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
+
+# Set UTF-8 encoding for console output on Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
 
 class TestRunner:
     """Comprehensive test runner for the Image Description Toolkit"""

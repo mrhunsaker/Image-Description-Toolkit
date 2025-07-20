@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Image Description Toolkit - Workflow Orchestrator
 
@@ -23,6 +24,12 @@ import os
 import argparse
 import subprocess
 import shutil
+
+# Set UTF-8 encoding for console output on Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
 import logging
 import json
 from pathlib import Path
@@ -294,7 +301,7 @@ class WorkflowOrchestrator:
             
             # Build command
             cmd = [
-                sys.executable, "descriptions_to_html.py",
+                sys.executable, "scripts/descriptions_to_html.py",
                 str(desc_file),
                 str(html_file),
                 "--title", step_config.get("title", "Image Analysis Report")

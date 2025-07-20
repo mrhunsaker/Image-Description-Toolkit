@@ -271,9 +271,11 @@ class ImageDescriber:
             
             # Get prompt from configuration
             prompt = self.get_prompt()
+            logger.debug(f"Using prompt: {repr(prompt)}")
             
             # Get model settings from configuration
             model_settings = self.get_model_settings()
+            logger.debug(f"Using model settings: {model_settings}")
             
             # Call Ollama API with configured settings
             response = ollama.chat(
@@ -288,8 +290,22 @@ class ImageDescriber:
                 options=model_settings
             )
             
+            logger.debug(f"Raw response: {response}")
+            logger.debug(f"Response type: {type(response)}")
+            logger.debug(f"Response keys: {response.keys() if hasattr(response, 'keys') else 'no keys'}")
+            if 'message' in response:
+                logger.debug(f"Message: {response['message']}")
+                logger.debug(f"Message type: {type(response['message'])}")
+                if hasattr(response['message'], 'content'):
+                    logger.debug(f"Message content: {repr(response['message'].content)}")
+                elif 'content' in response['message']:
+                    logger.debug(f"Message content dict: {repr(response['message']['content'])}")
+            
             description = response['message']['content'].strip()
             logger.info(f"Generated description for {image_path.name}")
+            logger.debug(f"Description content: {repr(description)}")
+            logger.debug(f"Description length: {len(description)}")
+            logger.debug(f"Description bool: {bool(description)}")
             
             # Clean up memory
             del image_base64, response
