@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Image Describer Wrapper
+Descriptions to HTML Wrapper
 
-This is a wrapper script that runs the actual image_describer from the scripts directory.
-It maintains backward compatibility for users expecting image_describer.py in the root.
+This is a wrapper script that runs the actual descriptions_to_html from the scripts directory.
+It maintains backward compatibility for users expecting descriptions_to_html.py in the root.
 """
 
 import sys
@@ -14,7 +14,7 @@ import subprocess
 # Get the directory containing this script
 root_dir = os.path.dirname(os.path.abspath(__file__))
 scripts_dir = os.path.join(root_dir, "scripts")
-script_path = os.path.join(scripts_dir, "image_describer.py")
+script_path = os.path.join(scripts_dir, "descriptions_to_html.py")
 
 # Forward all arguments to the actual script
 result = subprocess.run([sys.executable, script_path] + sys.argv[1:], cwd=scripts_dir)
