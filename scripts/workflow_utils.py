@@ -45,7 +45,9 @@ class WorkflowConfig:
                 return self.get_default_config()
                 
         except Exception as e:
-            print(f"Warning: Could not load workflow config: {e}")
+            # Use basic logging here since we don't have access to the WorkflowLogger yet
+            import logging
+            logging.warning(f"Could not load workflow config: {e}")
             return self.get_default_config()
     
     def get_default_config(self) -> Dict[str, Any]:

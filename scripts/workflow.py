@@ -69,6 +69,20 @@ class WorkflowOrchestrator:
         # Track processing results
         self.step_results = {}
         
+        # Track workflow statistics
+        self.statistics = {
+            'start_time': None,
+            'end_time': None,
+            'total_files_processed': 0,
+            'total_videos_processed': 0,
+            'total_images_processed': 0,
+            'total_conversions': 0,
+            'total_descriptions': 0,
+            'errors_encountered': 0,
+            'steps_completed': [],
+            'steps_failed': []
+        }
+        
     def extract_video_frames(self, input_dir: Path, output_dir: Path) -> Dict[str, Any]:
         """
         Extract frames from videos using video_frame_extractor.py
@@ -399,6 +413,10 @@ class WorkflowOrchestrator:
         self.logger.info(f"Input directory: {input_dir}")
         self.logger.info(f"Output directory: {output_dir}")
         
+        # Initialize workflow statistics
+        start_time = datetime.now()
+        self.statistics['start_time'] = start_time.isoformat()
+        
         # Set base output directory in config
         self.config.set_base_output_dir(output_dir)
         
@@ -411,7 +429,7 @@ class WorkflowOrchestrator:
             "steps_failed": [],
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
-            "start_time": datetime.now().isoformat()
+            "start_time": start_time.isoformat()
         }
         
         # Keep track of where processed files are for next steps
@@ -450,7 +468,11 @@ class WorkflowOrchestrator:
                 
                 self.step_results[step] = step_result
                 
+                # Update statistics based on step results
+                self._update_statistics(step, step_result)
+                
                 if step_result["success"]:
+                    self.statistics['steps_completed'].append(step)
                     workflow_results["steps_completed"].append(step)
                     self.logger.info(f"Step '{step}' completed successfully")
                     
@@ -458,20 +480,83 @@ class WorkflowOrchestrator:
                     if step in ["video", "convert"] and step_result.get("output_dir"):
                         current_input_dir = step_result["output_dir"]
                 else:
+                    self.statistics['steps_failed'].append(step)
                     workflow_results["steps_failed"].append(step)
                     workflow_results["success"] = False
                     self.logger.error(f"Step '{step}' failed: {step_result.get('error', 'Unknown error')}")
                     
             except Exception as e:
+                self.statistics['errors_encountered'] += 1
+                self.statistics['steps_failed'].append(step)
                 self.logger.error(f"Error executing step '{step}': {e}")
                 workflow_results["steps_failed"].append(step)
                 workflow_results["success"] = False
                 self.step_results[step] = {"success": False, "error": str(e)}
         
-        workflow_results["end_time"] = datetime.now().isoformat()
+        # Finalize statistics and logging
+        end_time = datetime.now()
+        self.statistics['end_time'] = end_time.isoformat()
+        workflow_results["end_time"] = end_time.isoformat()
         workflow_results["step_results"] = self.step_results
         
+        # Log comprehensive final statistics
+        self._log_final_statistics(start_time, end_time)
+        
         return workflow_results
+    
+    def _update_statistics(self, step: str, step_result: Dict[str, Any]) -> None:
+        """Update workflow statistics based on step results"""
+        if step_result.get("success"):
+            processed = step_result.get("processed", 0)
+            if step == "video":
+                self.statistics['total_videos_processed'] += processed
+            elif step == "convert":
+                self.statistics['total_conversions'] += processed
+                self.statistics['total_images_processed'] += processed
+            elif step == "describe":
+                self.statistics['total_descriptions'] += processed
+                self.statistics['total_images_processed'] += processed
+            
+            self.statistics['total_files_processed'] += processed
+    
+    def _log_final_statistics(self, start_time: datetime, end_time: datetime) -> None:
+        """Log comprehensive final workflow statistics"""
+        total_time = (end_time - start_time).total_seconds()
+        
+        self.logger.info("\n" + "="*60)
+        self.logger.info("FINAL WORKFLOW STATISTICS")
+        self.logger.info("="*60)
+        
+        # Time statistics
+        self.logger.info(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.logger.info(f"End time: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.logger.info(f"Total execution time: {total_time:.2f} seconds ({total_time/60:.1f} minutes)")
+        
+        # File processing statistics
+        self.logger.info(f"Total files processed: {self.statistics['total_files_processed']}")
+        self.logger.info(f"Videos processed: {self.statistics['total_videos_processed']}")
+        self.logger.info(f"Images processed: {self.statistics['total_images_processed']}")
+        self.logger.info(f"HEIC conversions: {self.statistics['total_conversions']}")
+        self.logger.info(f"Descriptions generated: {self.statistics['total_descriptions']}")
+        
+        # Step completion statistics
+        self.logger.info(f"Steps completed: {len(self.statistics['steps_completed'])}")
+        if self.statistics['steps_completed']:
+            self.logger.info(f"Completed steps: {', '.join(self.statistics['steps_completed'])}")
+        
+        if self.statistics['steps_failed']:
+            self.logger.info(f"Steps failed: {len(self.statistics['steps_failed'])}")
+            self.logger.info(f"Failed steps: {', '.join(self.statistics['steps_failed'])}")
+        
+        # Performance metrics
+        if total_time > 0 and self.statistics['total_files_processed'] > 0:
+            files_per_second = self.statistics['total_files_processed'] / total_time
+            self.logger.info(f"Average processing rate: {files_per_second:.2f} files/second")
+        
+        # Error tracking
+        self.logger.info(f"Errors encountered: {self.statistics['errors_encountered']}")
+        
+        self.logger.info("="*60)
     
     def _update_frame_extractor_config(self, config_file: str, output_dir: Path) -> None:
         """
@@ -580,6 +665,7 @@ Examples:
         input_dir = (Path(original_cwd) / input_dir).resolve()
     
     if not input_dir.exists():
+        # Can't use logger yet since orchestrator isn't created
         print(f"Error: Input directory does not exist: {input_dir}")
         sys.exit(1)
     
@@ -600,21 +686,28 @@ Examples:
     valid_steps = ["video", "convert", "describe", "html"]
     invalid_steps = [step for step in steps if step not in valid_steps]
     if invalid_steps:
+        # Can't use logger yet since orchestrator isn't created
         print(f"Error: Invalid workflow steps: {', '.join(invalid_steps)}")
         print(f"Valid steps: {', '.join(valid_steps)}")
         sys.exit(1)
     
-    if args.dry_run:
-        print("Dry run mode - showing what would be executed:")
-        print(f"Input directory: {input_dir}")
-        print(f"Output directory: {output_dir}")
-        print(f"Workflow steps: {', '.join(steps)}")
-        print(f"Configuration: {args.config}")
-        sys.exit(0)
-    
-    # Create orchestrator
+    # Create orchestrator first to get access to logging
     try:
         orchestrator = WorkflowOrchestrator(args.config, base_output_dir=output_dir)
+        
+        if args.dry_run:
+            orchestrator.logger.info("Dry run mode - showing what would be executed:")
+            orchestrator.logger.info(f"Input directory: {input_dir}")
+            orchestrator.logger.info(f"Output directory: {output_dir}")
+            orchestrator.logger.info(f"Workflow steps: {', '.join(steps)}")
+            orchestrator.logger.info(f"Configuration: {args.config}")
+            # Also print to console for immediate feedback
+            print("Dry run mode - showing what would be executed:")
+            print(f"Input directory: {input_dir}")
+            print(f"Output directory: {output_dir}")
+            print(f"Workflow steps: {', '.join(steps)}")
+            print(f"Configuration: {args.config}")
+            sys.exit(0)
         
         # Override configuration if specified
         if args.model:
@@ -630,7 +723,21 @@ Examples:
         # Run workflow
         results = orchestrator.run_workflow(input_dir, output_dir, steps)
         
-        # Print summary
+        # Log and print summary
+        orchestrator.logger.info("\n" + "="*60)
+        orchestrator.logger.info("WORKFLOW SUMMARY")
+        orchestrator.logger.info("="*60)
+        orchestrator.logger.info(f"Input directory: {results['input_dir']}")
+        orchestrator.logger.info(f"Output directory: {results['output_dir']}")
+        orchestrator.logger.info(f"Overall success: {'✅ YES' if results['success'] else '❌ NO'}")
+        orchestrator.logger.info(f"Steps completed: {', '.join(results['steps_completed']) if results['steps_completed'] else 'None'}")
+        
+        if results['steps_failed']:
+            orchestrator.logger.warning(f"Steps failed: {', '.join(results['steps_failed'])}")
+        
+        orchestrator.logger.info(f"\nDetailed results saved in workflow log file.")
+        
+        # Also print to console for immediate user feedback
         print("\n" + "="*60)
         print("WORKFLOW SUMMARY")
         print("="*60)

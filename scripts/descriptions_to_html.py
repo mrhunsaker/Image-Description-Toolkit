@@ -29,12 +29,59 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 import html
 import sys
+import logging
+import time
 
 # Set UTF-8 encoding for console output on Windows
 if sys.platform.startswith('win'):
     import codecs
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+
+# Setup logger
+logger = logging.getLogger('descriptions_to_html')
+
+
+def setup_logging(log_dir: Optional[str] = None, verbose: bool = False) -> None:
+    """
+    Set up logging configuration for the HTML converter
+    
+    Args:
+        log_dir: Directory to write log files to
+        verbose: Whether to enable debug logging
+    """
+    global logger
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # Set logging level
+    level = logging.DEBUG if verbose else logging.INFO
+    logger.setLevel(level)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler if log_dir is provided
+    if log_dir:
+        log_path = Path(log_dir)
+        log_path.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        log_filename = log_path / f"descriptions_to_html_{timestamp}.log"
+        
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        
+        logger.info(f"HTML converter log file: {log_filename.absolute()}")
 
 
 class DescriptionEntry:
@@ -160,7 +207,7 @@ class DescriptionsParser:
             return self.entries
             
         except Exception as e:
-            print(f"Error parsing file: {e}")
+            logger.error(f"Error parsing file: {e}")
             return []
     
     def _parse_section(self, section: str) -> Optional[DescriptionEntry]:
@@ -485,7 +532,15 @@ Examples:
         help="Enable verbose output"
     )
     
+    parser.add_argument(
+        "--log-dir",
+        help="Directory for log files (default: auto-detect workflow directory)"
+    )
+    
     args = parser.parse_args()
+    
+    # Setup logging before any processing
+    setup_logging(args.log_dir, args.verbose)
     
     # Set up file paths
     input_path = Path(args.input_file)
@@ -499,33 +554,30 @@ Examples:
             config = WorkflowConfig()
             workflow_output_dir = config.get_step_output_dir("html_reports", create=True)
             output_path = workflow_output_dir / "image_descriptions.html"
-            if args.verbose:
-                print(f"Using workflow output directory: {workflow_output_dir}")
+            logger.info(f"Using workflow output directory: {workflow_output_dir}")
         except ImportError:
             # workflow_utils not available, use default
             output_path = input_path.with_suffix('.html')
     
     # Check if input file exists
     if not input_path.exists():
-        print(f"Error: Input file '{input_path}' not found")
+        logger.error(f"Input file '{input_path}' not found")
         return 1
     
-    if args.verbose:
-        print(f"Input file: {input_path}")
-        print(f"Output file: {output_path}")
-        print(f"Title: {args.title}")
-        print(f"Include details: {args.full}")
+    logger.info(f"Input file: {input_path}")
+    logger.info(f"Output file: {output_path}")
+    logger.info(f"Title: {args.title}")
+    logger.info(f"Include details: {args.full}")
     
     # Parse the descriptions file
     parser = DescriptionsParser(input_path)
     entries = parser.parse()
     
     if not entries:
-        print("No entries found in the input file")
+        logger.warning("No entries found in the input file")
         return 1
     
-    if args.verbose:
-        print(f"Parsed {len(entries)} entries")
+    logger.info(f"Parsed {len(entries)} entries")
     
     # Generate HTML
     generator = HTMLGenerator(entries, args.title, include_details=args.full)
@@ -536,17 +588,17 @@ Examples:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print(f"Successfully generated HTML file: {output_path}")
-        print(f"Processed {len(entries)} image descriptions")
+        logger.info(f"Successfully generated HTML file: {output_path}")
+        logger.info(f"Processed {len(entries)} image descriptions")
         
         # Show some statistics
         entries_with_metadata = sum(1 for entry in entries if entry.photo_date or entry.location or entry.camera)
-        print(f"Entries with metadata: {entries_with_metadata}")
+        logger.info(f"Entries with metadata: {entries_with_metadata}")
         
         return 0
         
     except Exception as e:
-        print(f"Error writing output file: {e}")
+        logger.error(f"Error writing output file: {e}")
         return 1
 
 

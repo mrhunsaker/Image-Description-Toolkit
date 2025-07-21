@@ -18,10 +18,24 @@ from datetime import datetime
 class VideoFrameExtractor:
     def __init__(self, config_file: str = "video_frame_extractor_config.json", log_dir: str = None):
         self.supported_formats = {'.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
+        self.config_file = config_file  # Store for logging
         self.config = self.load_config(config_file)
         self.log_dir = log_dir
         self.setup_logging()
-        print("VideoFrameExtractor initialized successfully")
+        self.logger.info("VideoFrameExtractor initialized successfully")
+        self.logger.info(f"Supported video formats: {', '.join(sorted(self.supported_formats))}")
+        self.logger.info(f"Extraction mode: {self.config.get('extraction_mode', 'unknown')}")
+        
+        # Initialize processing statistics
+        self.stats = {
+            "total_videos_found": 0,
+            "total_videos_processed": 0,
+            "total_videos_skipped": 0,
+            "total_frames_extracted": 0,
+            "start_time": None,
+            "end_time": None,
+            "errors": []
+        }
         
     def setup_logging(self):
         """Set up logging to both console and file"""
@@ -48,8 +62,11 @@ class VideoFrameExtractor:
         self.logger = logging.getLogger(f"frame_extractor_{timestamp}")
         self.logger.setLevel(logging.INFO)
         
+        # Clear any existing handlers to avoid duplicates
+        self.logger.handlers.clear()
+        
         # Create formatter
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         
         # Create file handler
         file_handler = logging.FileHandler(log_filename, encoding='utf-8')
@@ -65,8 +82,10 @@ class VideoFrameExtractor:
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
         
-        self.logger.info(f"Frame extractor started. Log file: {log_filename.absolute()}")
+        self.logger.info(f"Video Frame Extractor started")
+        self.logger.info(f"Log file: {log_filename.absolute()}")
         self.logger.info(f"Working directory: {os.getcwd()}")
+        self.logger.info(f"Configuration loaded from: {os.path.abspath(self.config_file) if hasattr(self, 'config_file') else 'default'}")
         
     def load_config(self, config_file: str) -> dict:
         """Load configuration from JSON file"""
@@ -74,15 +93,17 @@ class VideoFrameExtractor:
             with open(config_file, 'r') as f:
                 content = f.read().strip()
                 if not content:
-                    print(f"Config file {config_file} is empty. Creating default config.")
+                    self.logger.info(f"Config file {config_file} is empty. Creating default config.")
                     return self.create_default_config(config_file)
-                return json.loads(content)
+                config = json.loads(content)
+                self.logger.info(f"Configuration loaded from: {os.path.abspath(config_file)}")
+                return config
         except FileNotFoundError:
-            print(f"Config file {config_file} not found. Creating default config.")
+            self.logger.info(f"Config file {config_file} not found. Creating default config.")
             return self.create_default_config(config_file)
         except json.JSONDecodeError as e:
-            print(f"Error parsing config file {config_file}: {e}")
-            print("Creating default config.")
+            self.logger.error(f"Error parsing config file {config_file}: {e}")
+            self.logger.info("Creating default config.")
             return self.create_default_config(config_file)
     
     def create_default_config(self, config_file: str) -> dict:
@@ -121,11 +142,11 @@ class VideoFrameExtractor:
             with open(config_file, 'w') as f:
                 json.dump(default_config, f, indent=4, ensure_ascii=False)
             
-            print(f"Created default config file: {config_file}")
-            print("You can edit this file to customize extraction settings.")
+            self.logger.info(f"Created default config file: {config_file}")
+            self.logger.info("You can edit this file to customize extraction settings.")
         except Exception as e:
-            print(f"Warning: Could not create config file {config_file}: {e}")
-            print("Using default configuration in memory.")
+            self.logger.warning(f"Could not create config file {config_file}: {e}")
+            self.logger.info("Using default configuration in memory.")
         
         return default_config
     
@@ -150,9 +171,12 @@ class VideoFrameExtractor:
     
     def extract_frames_time_interval(self, video_path: str, output_dir: str) -> List[str]:
         """Extract frames at regular time intervals"""
+        self.logger.info("Using time interval extraction mode")
+        
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
-            print(f"Error: Could not open video {video_path}")
+            error_msg = f"Could not open video {video_path}"
+            self.logger.error(error_msg)
             return []
         
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -163,22 +187,29 @@ class VideoFrameExtractor:
         start_frame = int(fps * self.config["start_time_seconds"])
         end_frame = int(fps * self.config["end_time_seconds"]) if self.config["end_time_seconds"] else total_frames
         
+        self.logger.info(f"Video properties: duration={duration:.1f}s, fps={fps:.1f}, total_frames={total_frames}")
+        self.logger.info(f"Extraction settings: interval={self.config['time_interval_seconds']}s, start={self.config['start_time_seconds']}s")
+        self.logger.info(f"Frame range: {start_frame} to {end_frame} (every {interval_frames} frames)")
+        
+        estimated_frames = (end_frame - start_frame) // interval_frames
+        if self.config["max_frames_per_video"]:
+            estimated_frames = min(estimated_frames, self.config["max_frames_per_video"])
+        self.logger.info(f"Estimated frames to extract: {estimated_frames}")
+        
         extracted_files = []
         frame_count = 0
         current_frame = start_frame
         
-        if self.config["log_progress"]:
-            print(f"  Video info: {duration:.1f}s, {fps:.1f} FPS, {total_frames} frames")
-            print(f"  Extracting every {self.config['time_interval_seconds']}s")
-        
         while current_frame < end_frame:
             if self.config["max_frames_per_video"] and frame_count >= self.config["max_frames_per_video"]:
+                self.logger.info(f"Reached maximum frames limit: {self.config['max_frames_per_video']}")
                 break
                 
             cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
             ret, frame = cap.read()
             
             if not ret:
+                self.logger.warning(f"Failed to read frame at position {current_frame}")
                 break
             
             # Resize if specified
@@ -190,24 +221,33 @@ class VideoFrameExtractor:
             filename = f"{self.config['frame_prefix']}_{timestamp:.2f}s.jpg"
             output_path = os.path.join(output_dir, filename)
             
-            cv2.imwrite(output_path, frame, [cv2.IMWRITE_JPEG_QUALITY, self.config["image_quality"]])
-            extracted_files.append(output_path)
+            success = cv2.imwrite(output_path, frame, [cv2.IMWRITE_JPEG_QUALITY, self.config["image_quality"]])
+            if success:
+                extracted_files.append(output_path)
+                frame_count += 1
+            else:
+                self.logger.error(f"Failed to save frame to {output_path}")
             
-            frame_count += 1
             current_frame += interval_frames
             
-            if self.config["log_progress"] and frame_count % 10 == 0:
-                print(f"    Extracted {frame_count} frames...")
-                print(f"    Latest file saved: {os.path.abspath(output_path)}")
+            # Progress logging every 10 frames or at specific intervals
+            if frame_count % 10 == 0 or frame_count == estimated_frames:
+                progress = (frame_count / estimated_frames * 100) if estimated_frames > 0 else 0
+                self.logger.info(f"Progress: {frame_count}/{estimated_frames} frames ({progress:.1f}%)")
         
         cap.release()
+        self.logger.info(f"Time interval extraction completed: {len(extracted_files)} frames extracted")
         return extracted_files
     
     def extract_frames_scene_change(self, video_path: str, output_dir: str) -> List[str]:
         """Extract frames when scene changes are detected"""
+        self.logger.info("Using scene change detection mode")
+        start_time = time.time()
+        
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
-            print(f"Error: Could not open video {video_path}")
+            error_msg = f"Could not open video {video_path}"
+            self.logger.error(error_msg)
             return []
         
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -218,23 +258,26 @@ class VideoFrameExtractor:
         end_frame = int(fps * self.config["end_time_seconds"]) if self.config["end_time_seconds"] else total_frames
         min_scene_frames = int(fps * self.config["min_scene_duration_seconds"])
         
+        self.logger.info(f"Video properties: duration={duration:.1f}s, fps={fps:.1f}, total_frames={total_frames}")
+        self.logger.info(f"Scene detection settings: threshold={self.config['scene_change_threshold']}%, min_duration={self.config['min_scene_duration_seconds']}s")
+        self.logger.info(f"Frame range: {start_frame} to {end_frame}")
+        
         extracted_files = []
         frame_count = 0
         last_scene_frame = start_frame
         prev_frame = None
-        
-        if self.config["log_progress"]:
-            print(f"  Video info: {duration:.1f}s, {fps:.1f} FPS, {total_frames} frames")
-            print(f"  Scene change threshold: {self.config['scene_change_threshold']}%")
+        scenes_detected = 0
         
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
         
         for current_frame_num in range(start_frame, end_frame):
             if self.config["max_frames_per_video"] and frame_count >= self.config["max_frames_per_video"]:
+                self.logger.info(f"Reached maximum frames limit: {self.config['max_frames_per_video']}")
                 break
             
             ret, frame = cap.read()
             if not ret:
+                self.logger.warning(f"Failed to read frame at position {current_frame_num}")
                 break
             
             # Check for scene change
@@ -245,29 +288,48 @@ class VideoFrameExtractor:
                 if (change_percentage > self.config["scene_change_threshold"] and 
                     current_frame_num - last_scene_frame >= min_scene_frames):
                     
+                    scenes_detected += 1
+                    timestamp = current_frame_num / fps
+                    self.logger.info(f"Scene change detected at {timestamp:.2f}s (frame {current_frame_num}): {change_percentage:.1f}% change")
+                    
                     # Resize if specified
                     save_frame = frame
                     if self.config["resize_width"] or self.config["resize_height"]:
                         save_frame = self.resize_frame(frame)
                     
                     # Save frame
-                    timestamp = current_frame_num / fps
-                    filename = f"{self.config['frame_prefix']}_scene_{timestamp:.2f}s.jpg"
+                    filename = f"{self.config['frame_prefix']}_scene_{scenes_detected:04d}_{timestamp:.2f}s.jpg"
                     output_path = os.path.join(output_dir, filename)
                     
-                    cv2.imwrite(output_path, save_frame, [cv2.IMWRITE_JPEG_QUALITY, self.config["image_quality"]])
-                    extracted_files.append(output_path)
-                    
-                    frame_count += 1
-                    last_scene_frame = current_frame_num
-                    
-                    if self.config["log_progress"]:
-                        print(f"    Scene change detected at {timestamp:.2f}s ({change_percentage:.1f}% change)")
-                        print(f"    Saved frame: {os.path.abspath(output_path)}")
+                    success = cv2.imwrite(output_path, save_frame, [cv2.IMWRITE_JPEG_QUALITY, self.config["image_quality"]])
+                    if success:
+                        extracted_files.append(output_path)
+                        self.statistics['frames_saved'] += 1
+                        frame_count += 1
+                        last_scene_frame = current_frame_num
+                        self.logger.info(f"Saved frame: {os.path.abspath(output_path)}")
+                    else:
+                        self.logger.error(f"Failed to save frame to {output_path}")
             
             prev_frame = frame.copy()
+            
+            # Progress logging every 1000 frames
+            if current_frame_num % 1000 == 0:
+                progress = ((current_frame_num - start_frame) / (end_frame - start_frame) * 100)
+                self.logger.info(f"Progress: {current_frame_num}/{end_frame} frames processed ({progress:.1f}%), {scenes_detected} scenes detected")
         
         cap.release()
+        
+        # Final statistics
+        elapsed_time = time.time() - start_time
+        self.statistics['total_frames_processed'] = current_frame_num
+        self.statistics['processing_time'] = elapsed_time
+        
+        self.logger.info(f"Scene change extraction completed: {len(extracted_files)} frames extracted from {scenes_detected} scenes")
+        self.logger.info(f"Processing time: {elapsed_time:.2f} seconds")
+        if elapsed_time > 0:
+            self.logger.info(f"Frames per second: {current_frame_num / elapsed_time:.2f}")
+        
         return extracted_files
     
     def resize_frame(self, frame: np.ndarray) -> np.ndarray:
@@ -291,70 +353,119 @@ class VideoFrameExtractor:
     
     def process_video(self, video_path: str) -> List[str]:
         """Process a single video file"""
-        if self.config["log_progress"]:
-            print(f"Processing: {video_path}")
+        video_start_time = time.time()
+        video_name = Path(video_path).stem
         
-        print(f"Video file stem (name without extension): {Path(video_path).stem}")
+        self.logger.info(f"Processing video: {video_path}")
+        self.logger.info(f"Video name: {video_name}")
         
         # Create output directory
         if self.config["preserve_directory_structure"]:
             # Get relative path from current directory
             rel_path = os.path.relpath(video_path)
-            print(f"Relative path from current dir: {rel_path}")
-            print(f"Directory part: {os.path.dirname(rel_path)}")
+            self.logger.debug(f"Relative path from current dir: {rel_path}")
+            self.logger.debug(f"Directory part: {os.path.dirname(rel_path)}")
             output_subdir = os.path.join(
                 self.config["output_directory"],
                 os.path.dirname(rel_path),
-                Path(video_path).stem
+                video_name
             )
         else:
             # Simple flat structure: just output_directory/video_name
-            # Don't use relative paths - just the video filename
             output_subdir = os.path.join(
                 self.config["output_directory"],
-                Path(video_path).stem
+                video_name
             )
         
-        print(f"Creating output directory: {output_subdir}")
+        self.logger.info(f"Output directory: {os.path.abspath(output_subdir)}")
         os.makedirs(output_subdir, exist_ok=True)
-        print(f"Output directory: {os.path.abspath(output_subdir)}")
         
         # Check if we should skip existing
         if self.config["skip_existing"]:
             existing_files = os.listdir(output_subdir)
             if existing_files:
-                print(f"  Skipping: Output directory not empty")
-                print(f"  Found {len(existing_files)} existing files in: {os.path.abspath(output_subdir)}")
-                print(f"  First few files: {existing_files[:5]}")
-                print(f"  To process anyway, set 'skip_existing': false in config or delete the directory")
+                self.logger.info(f"Skipping video: Output directory not empty")
+                self.logger.info(f"Found {len(existing_files)} existing files in: {os.path.abspath(output_subdir)}")
+                self.logger.debug(f"First few files: {existing_files[:5]}")
+                self.stats["total_videos_skipped"] += 1
                 return []
         
         # Extract frames based on mode
-        if self.config["extraction_mode"] == "time_interval":
-            extracted_files = self.extract_frames_time_interval(video_path, output_subdir)
-        elif self.config["extraction_mode"] == "scene_change":
-            extracted_files = self.extract_frames_scene_change(video_path, output_subdir)
-        else:
-            print(f"  Error: Unknown extraction mode '{self.config['extraction_mode']}'")
+        try:
+            if self.config["extraction_mode"] == "time_interval":
+                extracted_files = self.extract_frames_time_interval(video_path, output_subdir)
+            elif self.config["extraction_mode"] == "scene_change":
+                extracted_files = self.extract_frames_scene_change(video_path, output_subdir)
+            else:
+                error_msg = f"Unknown extraction mode '{self.config['extraction_mode']}'"
+                self.logger.error(error_msg)
+                self.stats["errors"].append(f"{video_name}: {error_msg}")
+                return []
+        except Exception as e:
+            error_msg = f"Error processing video {video_name}: {str(e)}"
+            self.logger.error(error_msg)
+            self.stats["errors"].append(error_msg)
             return []
         
-        # Log summary for this video
+        # Calculate processing time and log summary
+        video_end_time = time.time()
+        processing_time = video_end_time - video_start_time
+        
         if extracted_files:
-            print(f"  Extracted {len(extracted_files)} frames to: {os.path.abspath(output_subdir)}")
-            print(f"  First frame: {os.path.basename(extracted_files[0])}")
-            print(f"  Last frame: {os.path.basename(extracted_files[-1])}")
+            self.logger.info(f"Successfully extracted {len(extracted_files)} frames")
+            self.logger.info(f"Processing time: {processing_time:.2f} seconds")
+            self.logger.info(f"First frame: {os.path.basename(extracted_files[0])}")
+            self.logger.info(f"Last frame: {os.path.basename(extracted_files[-1])}")
+            self.stats["total_frames_extracted"] += len(extracted_files)
+            self.stats["total_videos_processed"] += 1
+        else:
+            self.logger.warning(f"No frames extracted from {video_name}")
         
         return extracted_files
+    
+    def log_final_summary(self):
+        """Log comprehensive final statistics"""
+        if 'start_time' not in self.statistics:
+            return
+            
+        total_time = time.time() - self.statistics['start_time']
+        
+        self.logger.info("")
+        self.logger.info("="*60)
+        self.logger.info("FINAL PROCESSING SUMMARY")
+        self.logger.info("="*60)
+        
+        # Video processing statistics
+        self.logger.info(f"Videos processed: {self.statistics.get('videos_processed', 0)}")
+        self.logger.info(f"Total frames extracted: {self.statistics.get('total_frames_extracted', 0)}")
+        self.logger.info(f"Total frames saved: {self.statistics.get('frames_saved', 0)}")
+        self.logger.info(f"Total frames processed: {self.statistics.get('total_frames_processed', 0)}")
+        
+        # Timing statistics
+        self.logger.info(f"Total processing time: {total_time:.2f} seconds")
+        if self.statistics.get('total_frames_processed', 0) > 0:
+            fps = self.statistics['total_frames_processed'] / total_time
+            self.logger.info(f"Overall processing rate: {fps:.2f} frames/second")
+        
+        # Configuration summary
+        self.logger.info(f"Extraction mode: {self.config['extraction_mode']}")
+        if self.config['extraction_mode'] == 'time_interval':
+            self.logger.info(f"Time interval: {self.config['time_interval_seconds']} seconds")
+        else:
+            self.logger.info(f"Scene change threshold: {self.config['scene_change_threshold']}%")
+        
+        self.logger.info(f"Output directory: {os.path.abspath(self.config['output_directory'])}")
+        self.logger.info("="*60)
     
     def find_video_files(self, directory: str) -> List[str]:
         """Find all video files in directory and subdirectories"""
         video_files = []
         abs_directory = os.path.abspath(directory)
         
-        print(f"Searching for video files in: {abs_directory}")
+        self.logger.info(f"Searching for video files in: {abs_directory}")
             
         if not os.path.exists(directory):
-            print(f"Error: Directory does not exist: {abs_directory}")
+            self.logger.error(f"Directory does not exist: {abs_directory}")
             return video_files
             
         dir_count = 0
@@ -364,103 +475,111 @@ class VideoFrameExtractor:
             dir_count += 1
             total_files_checked += len(files)
             
-            # Print progress every 10 directories
+            # Log progress every 10 directories
             if dir_count % 10 == 1:
-                print(f"Checking directory {dir_count}: {root}")
+                self.logger.info(f"Checking directory {dir_count}: {root}")
             
             for file in files:
                 file_suffix = Path(file).suffix.lower()
                 if file_suffix in self.supported_formats:
                     full_path = os.path.join(root, file)
                     video_files.append(full_path)
-                    # Print first 10 found videos, then show summary
+                    # Log first 10 found videos, then show summary
                     if len(video_files) <= 10:
-                        print(f"Found video file: {full_path}")
+                        self.logger.info(f"Found video file: {full_path}")
                     elif len(video_files) == 11:
-                        print("... (additional videos found, showing count only)")
+                        self.logger.info("... (additional videos found, showing count only)")
         
-        print(f"Search complete: {dir_count} directories, {total_files_checked} files checked")
-        print(f"Total video files found: {len(video_files)}")
+        self.logger.info(f"Search complete: {dir_count} directories, {total_files_checked} files checked")
+        self.logger.info(f"Total video files found: {len(video_files)}")
             
         return video_files
     
     def run(self, input_path: str):
         """Main execution method"""
-        start_time = time.time()
+        self.statistics['start_time'] = time.time()
+        start_time = self.statistics['start_time']
         
-        print("Video Frame Extractor")
-        print("===================")
-        print(f"Mode: {self.config['extraction_mode']}")
-        print(f"Output directory: {self.config['output_directory']}")
-        print(f"Full output path: {os.path.abspath(self.config['output_directory'])}")
-        print("")
+        self.logger.info("Video Frame Extractor")
+        self.logger.info("===================")
+        self.logger.info(f"Mode: {self.config['extraction_mode']}")
+        self.logger.info(f"Output directory: {self.config['output_directory']}")
+        self.logger.info(f"Full output path: {os.path.abspath(self.config['output_directory'])}")
+        self.logger.info("")
         
         # Find video files
         if os.path.isfile(input_path):
             if Path(input_path).suffix.lower() in self.supported_formats:
                 video_files = [input_path]
             else:
-                print(f"Error: {input_path} is not a supported video format")
+                self.logger.error(f"{input_path} is not a supported video format")
                 return
         else:
             video_files = self.find_video_files(input_path)
         
         if not video_files:
-            print("No video files found.")
+            self.logger.warning("No video files found.")
             return
         
-        print(f"Found {len(video_files)} video file(s)")
+        self.logger.info(f"Found {len(video_files)} video file(s)")
         for i, video in enumerate(video_files, 1):
-            print(f"  {i}. {video}")
-        print("")
+            self.logger.info(f"  {i}. {video}")
+        self.logger.info("")
         
         # Process videos
         total_extracted = 0
+        self.statistics['videos_processed'] = 0
+        
         for i, video_path in enumerate(video_files, 1):
-            print(f"[{i}/{len(video_files)}]")
+            self.logger.info(f"[{i}/{len(video_files)}] Processing video: {os.path.basename(video_path)}")
             extracted = self.process_video(video_path)
             total_extracted += len(extracted)
+            self.statistics['videos_processed'] += 1
             
-            if self.config["log_progress"]:
-                print(f"  Extracted {len(extracted)} frames")
-            print("")
+            self.logger.info(f"  Extracted {len(extracted)} frames from {os.path.basename(video_path)}")
         
         # Summary
         elapsed_time = time.time() - start_time
-        print("Summary")
-        print("=======")
-        print(f"Processed {len(video_files)} video(s)")
-        print(f"Extracted {total_extracted} frame(s)")
-        print(f"Time elapsed: {elapsed_time:.1f} seconds")
-        print(f"Output directory: {os.path.abspath(self.config['output_directory'])}")
+        self.statistics['total_extraction_time'] = elapsed_time
+        self.statistics['total_frames_extracted'] = total_extracted
+        
+        self.logger.info("Summary")
+        self.logger.info("=======")
+        self.logger.info(f"Processed {len(video_files)} video(s)")
+        self.logger.info(f"Extracted {total_extracted} frame(s)")
+        self.logger.info(f"Time elapsed: {elapsed_time:.1f} seconds")
+        self.logger.info(f"Output directory: {os.path.abspath(self.config['output_directory'])}")
         
         # Help user find the files
         if total_extracted > 0:
-            print("\n" + "="*50)
-            print("WHERE TO FIND YOUR EXTRACTED FRAMES:")
-            print("="*50)
+            self.logger.info("\n" + "="*50)
+            self.logger.info("WHERE TO FIND YOUR EXTRACTED FRAMES:")
+            self.logger.info("="*50)
             
             # Check if output directory exists and list its contents
             output_dir = os.path.abspath(self.config['output_directory'])
             if os.path.exists(output_dir):
-                print(f"Main output directory: {output_dir}")
+                self.logger.info(f"Main output directory: {output_dir}")
                 
                 # List all subdirectories
                 try:
                     for root, dirs, files in os.walk(output_dir):
                         if files:  # Only show directories that contain files
-                            print(f"  Directory: {root}")
-                            print(f"    Contains {len(files)} files")
+                            self.logger.info(f"  Directory: {root}")
+                            self.logger.info(f"    Contains {len(files)} files")
                             if files:
-                                print(f"    Sample files: {files[:3]}")
+                                self.logger.info(f"    Sample files: {files[:3]}")
                 except Exception as e:
-                    print(f"Error listing directories: {e}")
+                    self.logger.error(f"Error listing directories: {e}")
             else:
-                print(f"Warning: Output directory {output_dir} does not exist!")
+                self.logger.warning(f"Output directory {output_dir} does not exist!")
             
-            print("\nTo open the directory in Windows Explorer:")
-            print(f'explorer "{output_dir}"')
-            print("="*50)
+            self.logger.info("\nTo open the directory in Windows Explorer:")
+            self.logger.info(f'explorer "{output_dir}"')
+            self.logger.info("="*50)
+        
+        # Log final comprehensive summary
+        self.log_final_summary()
 
 def main():
     parser = argparse.ArgumentParser(description="Extract frames from video files")
@@ -484,11 +603,11 @@ def main():
     if args.time is not None:
         extractor.config["extraction_mode"] = "time_interval"
         extractor.config["time_interval_seconds"] = args.time
-        print(f"Command line override: Using time interval extraction mode ({args.time}s intervals)")
+        extractor.logger.info(f"Command line override: Using time interval extraction mode ({args.time}s intervals)")
     elif args.scene is not None:
         extractor.config["extraction_mode"] = "scene_change"
         extractor.config["scene_change_threshold"] = args.scene
-        print(f"Command line override: Using scene change detection mode ({args.scene}% threshold)")
+        extractor.logger.info(f"Command line override: Using scene change detection mode ({args.scene}% threshold)")
     
     extractor.run(args.input)
 
