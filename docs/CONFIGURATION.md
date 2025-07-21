@@ -6,7 +6,7 @@ The ImageDescriber uses a comprehensive configuration system that allows you to 
 
 ## Configuration Structure
 
-The `config.json` file contains five main sections:
+The `image_describer_config.json` file contains five main sections:
 
 ### 1. Model Settings
 Controls how the AI vision model behaves:
@@ -104,7 +104,7 @@ Performance and compatibility settings:
 You can set which prompt style is used by default (when no `--prompt-style` is specified) by editing the JSON file directly.
 
 ### Direct JSON Editing
-Edit `config.json` and change the `default_prompt_style` value:
+Edit `image_describer_config.json` and change the `default_prompt_style` value:
 ```json
 {
   "default_prompt_style": "artistic",
@@ -130,7 +130,7 @@ python image_describer.py photos
 python image_describer.py photos --prompt-style artistic
 
 # Use custom config file
-python image_describer.py photos --config my_config.json
+python image_describer.py photos --config my_image_describer_config.json
 ```
 
 ### Memory Optimization
@@ -145,7 +145,7 @@ python image_describer.py photos --model moondream --max-size 512
 python image_describer.py photos --max-files 5
 
 ### Direct Editing
-Edit `config.json` and add to `prompt_variations`:
+Edit `image_describer_config.json` and add to `prompt_variations`:
 ```json
 {
   "prompt_variations": {
@@ -222,10 +222,10 @@ Create wrapper scripts for common tasks:
 
 ```bash
 # process_artwork.bat
-python image_describer.py %1 --config artistic_config.json --prompt-style artistic
+python image_describer.py %1 --config artistic_image_describer_config.json --prompt-style artistic
 
 # process_photos.bat  
-python image_describer.py %1 --config photo_config.json --prompt-style technical
+python image_describer.py %1 --config photo_image_describer_config.json --prompt-style technical
 ```
 
 ### Integration with Other Tools

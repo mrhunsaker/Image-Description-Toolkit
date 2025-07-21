@@ -1,13 +1,28 @@
 # Image Description Toolkit - Complete Dependencies
+# 
+# This file contains all dependencies needed for the complete
+# Image Description Toolkit including workflow system and all individual scripts
+#
+# Install with: pip install -r requirements.txt
 
 # Core dependencies for image description functionality
 ollama>=0.3.0
-pillow>=10.0.0
-requests>=2.31.0
 
-# HEIC/HEIF conversion support (optional but recommended)
+# Image processing and format support
+Pillow>=10.0.0
 pillow-heif>=0.13.0
 
-# Video frame extraction dependencies
+# Video processing (for video_frame_extractor.py)
 opencv-python>=4.8.0
 numpy>=1.24.0
+
+# Configuration and utilities (compatibility for older Python versions)
+typing-extensions>=4.0.0; python_version<"3.8"
+pathlib2>=2.3.5; python_version<"3.4"
+
+# Optional: Enhanced user experience
+tqdm>=4.60.0
+
+# Development and testing (optional)
+pytest>=6.0.0
+pytest-mock>=3.6.0

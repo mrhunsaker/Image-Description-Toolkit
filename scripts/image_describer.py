@@ -34,7 +34,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 
 
-# Configure logging
+# Configure basic logging (will be enhanced in main() if log-dir is provided)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -42,12 +42,55 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def setup_logging(log_dir: Optional[str] = None, verbose: bool = False) -> None:
+    """
+    Set up logging configuration for the image describer
+    
+    Args:
+        log_dir: Directory to write log files to
+        verbose: Whether to enable debug logging
+    """
+    global logger
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # Set logging level
+    level = logging.DEBUG if verbose else logging.INFO
+    logger.setLevel(level)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler if log_dir is provided
+    if log_dir:
+        log_path = Path(log_dir)
+        log_path.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        log_filename = log_path / f"image_describer_{timestamp}.log"
+        
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        
+        logger.info(f"Image describer log file: {log_filename.absolute()}")
+
+
 class ImageDescriber:
     """Class to handle image description using Ollama vision model"""
     
     def __init__(self, model_name: str = None, max_image_size: int = 1024, 
                  enable_compression: bool = True, batch_delay: float = 2.0, 
-                 config_file: str = "config.json", prompt_style: str = "detailed"):
+                 config_file: str = "image_describer_config.json", prompt_style: str = "detailed",
+                 output_dir: str = None):
         """
         Initialize the ImageDescriber
         
@@ -58,6 +101,7 @@ class ImageDescriber:
             batch_delay: Delay between processing images to prevent memory buildup
             config_file: Path to the JSON configuration file
             prompt_style: Style of prompt to use (detailed, concise, artistic, technical)
+            output_dir: Custom output directory (default: same as input directory)
         """
         # Load configuration first
         self.config = self.load_config(config_file)
@@ -72,6 +116,7 @@ class ImageDescriber:
         self.enable_compression = enable_compression
         self.batch_delay = batch_delay
         self.prompt_style = prompt_style
+        self.output_dir = output_dir  # Custom output directory
         
         # Set supported formats from config
         self.supported_formats = set(self.config.get('processing_options', {}).get('supported_formats', 
@@ -122,8 +167,7 @@ class ImageDescriber:
                 "temperature": 0.1,
                 "num_predict": 600,
                 "top_k": 40,
-                "top_p": 0.9,
-                "repeat_penalty": 1.3
+                "top_p": 0.9
             },
             "prompt_template": "Describe this image in detail, including:\n- Main subjects/objects\n- Setting/environment\n- Key colors and lighting\n- Notable activities or composition\nKeep it comprehensive and informative for metadata.",
             "default_prompt_style": "detailed",
@@ -268,9 +312,11 @@ class ImageDescriber:
             
             # Get prompt from configuration
             prompt = self.get_prompt()
+            logger.debug(f"Using prompt: {repr(prompt)}")
             
             # Get model settings from configuration
             model_settings = self.get_model_settings()
+            logger.debug(f"Using model settings: {model_settings}")
             
             # Call Ollama API with configured settings
             response = ollama.chat(
@@ -285,8 +331,22 @@ class ImageDescriber:
                 options=model_settings
             )
             
+            logger.debug(f"Raw response: {response}")
+            logger.debug(f"Response type: {type(response)}")
+            logger.debug(f"Response keys: {response.keys() if hasattr(response, 'keys') else 'no keys'}")
+            if 'message' in response:
+                logger.debug(f"Message: {response['message']}")
+                logger.debug(f"Message type: {type(response['message'])}")
+                if hasattr(response['message'], 'content'):
+                    logger.debug(f"Message content: {repr(response['message'].content)}")
+                elif 'content' in response['message']:
+                    logger.debug(f"Message content dict: {repr(response['message']['content'])}")
+            
             description = response['message']['content'].strip()
             logger.info(f"Generated description for {image_path.name}")
+            logger.debug(f"Description content: {repr(description)}")
+            logger.debug(f"Description length: {len(description)}")
+            logger.debug(f"Description bool: {bool(description)}")
             
             # Clean up memory
             del image_base64, response
@@ -379,8 +439,23 @@ class ImageDescriber:
             logger.error(f"Path is not a directory: {directory_path}")
             return
         
-        # Create output file path
-        output_file = directory_path / "image_descriptions.txt"
+        # Create output file path - use custom output dir or workflow structure
+        if self.output_dir:
+            # User specified custom output directory
+            output_dir = Path(self.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_file = output_dir / "image_descriptions.txt"
+        else:
+            # Use workflow output structure
+            try:
+                from workflow_utils import WorkflowConfig
+                config = WorkflowConfig()
+                output_dir = config.get_step_output_dir("image_description", create=True)
+                output_file = output_dir / "image_descriptions.txt"
+                logger.info(f"Using workflow output directory: {output_dir}")
+            except ImportError:
+                # Fallback to local directory if workflow_utils not available
+                output_file = directory_path / "image_descriptions.txt"
         
         # Initialize the output file with a header
         try:
@@ -419,13 +494,13 @@ class ImageDescriber:
         
         # Process each image with memory management
         success_count = 0
+        overall_start_time = time.time()
+        
         for i, image_path in enumerate(image_files, 1):
-            # Calculate relative path for better logging
-            try:
-                relative_path = image_path.relative_to(directory_path)
-                logger.info(f"Processing image {i}/{len(image_files)}: {relative_path}")
-            except ValueError:
-                logger.info(f"Processing image {i}/{len(image_files)}: {image_path.name}")
+            # Log progress and start time for this image
+            logger.info(f"Describing image {i} of {len(image_files)}: {image_path.name}")
+            image_start_time = time.time()
+            logger.info(f"Start time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(image_start_time))}")
             
             # Extract metadata from image
             metadata = self.extract_metadata(image_path)
@@ -436,6 +511,12 @@ class ImageDescriber:
             
             # Get description from Ollama
             description = self.get_image_description(image_path)
+            
+            # Log end time for this image
+            image_end_time = time.time()
+            processing_duration = image_end_time - image_start_time
+            logger.info(f"End time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(image_end_time))}")
+            logger.info(f"Processing duration: {processing_duration:.2f} seconds")
             
             if description:
                 # Write description to file with metadata and base directory for relative paths
@@ -457,7 +538,12 @@ class ImageDescriber:
                 time.sleep(self.batch_delay)
             gc.collect()
         
+        # Log overall completion summary
+        overall_end_time = time.time()
+        total_duration = overall_end_time - overall_start_time
         logger.info(f"Processing complete. Successfully processed {success_count}/{len(image_files)} images")
+        logger.info(f"Total processing time: {total_duration:.2f} seconds")
+        logger.info(f"Average time per image: {total_duration/len(image_files):.2f} seconds")
         logger.info(f"Descriptions saved to: {output_file}")
     
     def extract_metadata(self, image_path: Path) -> Dict[str, Any]:
@@ -720,7 +806,7 @@ class ImageDescriber:
         return "\n".join(lines)
 
     # ...existing code...
-def get_default_prompt_style(config_file: str = "config.json") -> str:
+def get_default_prompt_style(config_file: str = "image_describer_config.json") -> str:
     """
     Get the default prompt style from configuration file
     
@@ -754,7 +840,7 @@ def get_default_prompt_style(config_file: str = "config.json") -> str:
     return "detailed"
 
 
-def get_available_prompt_styles(config_file: str = "config.json") -> list:
+def get_available_prompt_styles(config_file: str = "image_describer_config.json") -> list:
     """
     Get available prompt styles from configuration file
     
@@ -818,7 +904,7 @@ Configuration:
         "--model",
         type=str,
         default=None,
-        help="Ollama vision model to use (default: from config.json)"
+        help="Ollama vision model to use (default: from image_describer_config.json)"
     )
     parser.add_argument(
         "--recursive",
@@ -855,8 +941,18 @@ Configuration:
     parser.add_argument(
         "--config",
         type=str,
-        default="config.json",
-        help="Path to JSON configuration file (default: config.json)"
+        default="image_describer_config.json",
+        help="Path to JSON configuration file (default: image_describer_config.json)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="Output directory for description file (default: workflow_output/descriptions/)"
+    )
+    parser.add_argument(
+        "--log-dir",
+        type=str,
+        help="Directory for log files (default: uses workflow output/logs)"
     )
     parser.add_argument(
         "--prompt-style",
@@ -873,9 +969,8 @@ Configuration:
     
     args = parser.parse_args()
     
-    # Set logging level
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # Set up logging with log directory and verbosity
+    setup_logging(log_dir=args.log_dir, verbose=args.verbose)
     
     # Convert directory path to Path object
     directory_path = Path(args.directory)
@@ -887,7 +982,8 @@ Configuration:
         enable_compression=not args.no_compression,
         batch_delay=args.batch_delay,
         config_file=args.config,
-        prompt_style=args.prompt_style
+        prompt_style=args.prompt_style,
+        output_dir=args.output_dir
     )
     
     # Override metadata extraction if disabled via command line

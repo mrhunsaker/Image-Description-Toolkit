@@ -1,428 +1,296 @@
-# ImageDescriber - AI-Powered Image Analysis Tool
+# Image Description Toolkit
 
-A comprehensive Python toolkit for processing images using Ollama's vision models to generate detailed descriptions and extract metadata. The project includes both an image description system and a HEIC to JPG converter utility. A script to convert descriptions to an HTML page is also included.
+An AI-powered toolkit for generating descriptive text from images using local language models via Ollama. The toolkit provides a unified workflow system that orchestrates the entire pipeline from video frame extraction through HTML report generation, making it simple to process large collections of media files.
 
-## Features
+## 🌟 Features
 
-- **AI-Powered Descriptions**: Generate detailed descriptions using Ollama vision models (moondream, llama3.2-vision, llava, etc.)
-- **Batch Processing**: Process entire directories of images efficiently
-- **Recursive Processing**: Optionally process subdirectories recursively
-- **EXIF Metadata Extraction**: Extract camera settings, GPS location, and photo timestamps
-- **Multiple Output Formats**: Save descriptions to text files with comprehensive metadata
-- **HTML Web Gallery**: Convert descriptions to beautiful, responsive HTML pages
-- **Memory Optimization**: Built-in memory management for large image collections
-- **Flexible Configuration**: JSON-based configuration system with multiple prompt styles
-- **HEIC Conversion**: Convert HEIC/HEIF images to JPG format with metadata preservation
-- **Accessibility Compliant**: HTML output meets WCAG 2.1 standards
-- **Supported Formats**: JPG, JPEG, PNG, BMP, TIFF, WebP (plus HEIC conversion)
-- **Robust Error Handling**: Continues processing even if individual images fail
-- **Detailed Logging**: Comprehensive logging with progress tracking
+- **🔄 Unified Workflow System**: Complete pipeline from video → frames → images → descriptions → HTML reports
+- **🤖 AI-Powered Descriptions**: Generate natural language descriptions using local Ollama models
+- **🎥 Video Frame Extraction**: Extract frames from videos for analysis
+- **🖼️ Image Format Conversion**: Convert HEIC images to JPG automatically
+- **📄 HTML Report Generation**: Create beautiful web galleries with descriptions
+- **⚡ Batch Processing**: Handle multiple files and directories efficiently
+- **📊 Comprehensive Logging**: Professional logging with statistics and progress tracking
+- **🛠️ Individual Script Access**: Use components separately when needed
 
-## Prerequisites
+## 📁 Project Structure
 
-1. **Ollama**: Make sure Ollama is installed and running on your system
-   - Download from: https://ollama.com/
-   - Install a vision model (recommended): `ollama pull moondream`
-   - Alternative models: `ollama pull llama3.2-vision` or `ollama pull llava`
-
-2. **Python 3.8+**: This script requires Python 3.8 or higher
-
-## Installation
-
-1. Clone or download this repository
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Project Structure
-
-- `image_describer.py` - Main image description script
-- `descriptions_to_html.py` - HTML converter for description files
-- `ConvertImage.py` - HEIC to JPG converter utility
-- `config.json` - Configuration file with model settings and prompts
-- `requirements.txt` - Python dependencies for all functionality
-- `HTML_README.md` - Documentation for the HTML converter tool
-
-## Usage
-
-### Image Description Tool
-
-#### Command Line Interface
-
-```bash
-python image_describer.py <directory> [options]
+```
+Image-Description-Toolkit/
+├── workflow.py                # 🎯 Main entry point - workflow wrapper
+├── scripts/                   # 🔧 Core processing scripts
+│   ├── workflow.py           #    Workflow orchestrator (main engine)
+│   ├── video_frame_extractor.py #    Extract frames from videos
+│   ├── ConvertImage.py       #    Convert HEIC to JPG
+│   ├── image_describer.py    #    AI image description
+│   ├── descriptions_to_html.py #    Generate HTML reports
+│   ├── workflow_utils.py     #    Workflow utilities
+│   ├── workflow_config.json  #    Workflow configuration
+│   ├── image_describer_config.json # AI model settings
+│   └── video_frame_extractor_config.json # Video processing config
+├── docs/                     # 📚 Documentation
+├── tests/                    # 🧪 Test suite and test files
+├── requirements.txt          # 📦 Python dependencies
+├── .gitignore               # 🚫 Git ignore rules
+└── README.md                # 📖 This file
 ```
 
-**Arguments:**
-- `directory`: Path to the directory containing images to process
+## 🚀 Quick Start
 
-**Options:**
-- `--model`: Ollama vision model to use (default: from config.json)
-- `--prompt-style`: Style of prompt to use (detailed, concise, artistic, technical, etc.)
-- `--recursive`: Process subdirectories recursively
-- `--verbose`: Enable verbose logging
-- `--max-size`: Maximum image dimension for processing (default: 1024)
-- `--no-compression`: Disable image compression optimization
-- `--batch-delay`: Delay between processing images in seconds (default: 1.0)
-- `--max-files`: Maximum number of files to process (for testing)
-- `--config`: Path to configuration file (default: config.json)
-- `--no-metadata`: Disable metadata extraction from image files
+### Primary Usage (Recommended)
 
-#### Examples
-
-1. **Process images in a directory:**
-   ```bash
-   python image_describer.py "photos/"
-   ```
-
-2. **Process images recursively with verbose output:**
-   ```bash
-   python image_describer.py "photos/" --recursive --verbose
-   ```
-
-3. **Use a specific model and prompt style:**
-   ```bash
-   python image_describer.py "photos/" --model moondream --prompt-style artistic
-   ```
-
-4. **Memory-optimized processing for large collections:**
-   ```bash
-   python image_describer.py "photos/" --max-size 512 --batch-delay 2.0
-   ```
-
-5. **Testing with limited files:**
-   ```bash
-   python image_describer.py "photos/" --max-files 5 --verbose
-   ```
-
-### HEIC Converter Tool
-
-#### Command Line Interface
+The **workflow system** is the main way to use this toolkit:
 
 ```bash
-python ConvertImage.py <input> [options]
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Install Ollama and a vision model
+# Download from https://ollama.ai/
+ollama pull llava:7b  # or llama3.2-vision:11b, moondream, etc.
+
+# 3. Process your media files (videos + images)
+python workflow.py path/to/your/media
+
+# 4. Find results in timestamped output directory
+# -> workflow_output_YYYYMMDD_HHMMSS/
 ```
 
-**Arguments:**
-- `input`: Path to HEIC file or directory containing HEIC files
+### Workflow Steps
 
-**Options:**
-- `--output`: Output directory (default: same as input)
-- `--quality`: JPEG quality 1-100 (default: 90)
-- `--recursive`: Process subdirectories recursively
-- `--preserve-metadata`: Keep original EXIF data
-- `--overwrite`: Overwrite existing files
-- `--verbose`: Enable verbose logging
+The workflow automatically handles:
+1. **Video Processing** → Extract frames from MP4, MOV, AVI files  
+2. **Image Conversion** → Convert HEIC to JPG  
+3. **AI Description** → Generate descriptions using Ollama models  
+4. **HTML Generation** → Create beautiful web gallery with descriptions
 
-#### Examples
-
-1. **Convert a single HEIC file:**
-   ```bash
-   python ConvertImage.py photo.heic
-   ```
-
-2. **Convert all HEIC files in a directory:**
-   ```bash
-   python ConvertImage.py "heic_photos/" --recursive --quality 85
-   ```
-
-3. **Convert with metadata preservation:**
-   ```bash
-   python ConvertImage.py "heic_photos/" --preserve-metadata --output "converted/"
-   ```
-
-### HTML Converter Tool
-
-The HTML converter transforms the text files generated by ImageDescriber into beautiful, web-ready HTML pages with proper formatting and styling.
-
-#### Command Line Interface
+### Advanced Workflow Usage
 
 ```bash
-python descriptions_to_html.py [input_file] [output_file] [options]
+# Process only specific steps
+python workflow.py media/ --steps describe,html
+
+# Use custom output directory
+python workflow.py media/ --output-dir my_results
+
+# Override AI model
+python workflow.py media/ --model llama3.2-vision:11b
+
+# Dry run (see what would be processed)
+python workflow.py media/ --dry-run
+
+# Verbose logging
+python workflow.py media/ --verbose
 ```
 
-**Arguments:**
-- `input_file`: Text file with image descriptions (default: image_descriptions.txt)
-- `output_file`: Output HTML file (default: input_file with .html extension)
+### Individual Script Usage (Advanced)
 
-**Options:**
-- `--title`: Title for the HTML page (default: "Image Descriptions")
-- `--full`: Include full details section with metadata for each image
-- `--verbose`: Enable verbose output
+When you need fine-grained control, you can use scripts directly:
 
-#### Examples
+```bash
+# Video frame extraction
+cd scripts
+python video_frame_extractor.py path/to/videos
 
-1. **Convert descriptions to HTML (minimal view):**
-   ```bash
-   python descriptions_to_html.py
-   ```
+# Image format conversion  
+python ConvertImage.py path/to/heic/files --output converted/
 
-2. **Convert with full metadata details:**
-   ```bash
-   python descriptions_to_html.py --full
-   ```
+# AI image descriptions
+python image_describer.py path/to/images --model llava:7b
 
-3. **Convert with custom title:**
-   ```bash
-   python descriptions_to_html.py --title "My Photo Gallery" --full
-   ```
+# HTML report generation
+python descriptions_to_html.py descriptions.txt report.html
+```
 
-4. **Convert specific files:**
-   ```bash
-   python descriptions_to_html.py vacation_descriptions.txt vacation_gallery.html --full
-   ```
+## 🧪 Testing
 
-#### HTML Features
+```bash
+# Run test suite
+cd tests
+python run_tests.py
 
-- **Responsive Design**: Mobile-friendly layout with clean typography
-- **Two Display Modes**: 
-  - **Minimal**: Photo names and descriptions only (default)
-  - **Full**: Complete metadata including camera settings, GPS, timestamps
-- **Table of Contents**: Automatically generated for collections with 5+ images
-- **Professional Styling**: Color-coded sections with modern CSS
-- **Print-Friendly**: Optimized for both screen and print viewing
+# Test individual components
+python test_workflow.py
+```
 
-#### Typical Workflow
+## 🛠️ Core Components
 
-1. **Generate descriptions:**
-   ```bash
-   python image_describer.py "photos/"
-   ```
+### Workflow System (`workflow.py` → `scripts/workflow.py`)
+The main orchestrator that provides a unified processing pipeline:
+- **🎯 Simple Entry Point**: Just run `python workflow.py media_folder`
+- **🔄 Complete Pipeline**: Handles video→frames→conversion→descriptions→HTML
+- **📊 Progress Tracking**: Real-time logging with comprehensive statistics  
+- **🛡️ Error Resilience**: Continues processing despite individual file failures
+- **⚙️ Flexible Configuration**: Support for custom models, output directories, and step selection
+- **📋 Professional Logging**: Timestamped logs with detailed statistics and summaries
 
-2. **Convert to HTML:**
-   ```bash
-   python descriptions_to_html.py --full --title "My Photo Collection"
-   ```
+### Video Frame Extractor (`scripts/video_frame_extractor.py`)
+Extract frames from videos for image analysis:
+- **🎬 Multiple Formats**: MP4, MOV, AVI, MKV support
+- **⏱️ Flexible Extraction**: Time-based intervals (e.g., every 5 seconds)
+- **🖼️ Quality Control**: Configurable resolution and image quality
+- **📁 Organized Output**: Systematic frame numbering and folder structure
 
-3. **Open in browser:**
-   ```bash
-   start image_descriptions.html  # Windows
-   open image_descriptions.html   # macOS
-   ```
+### Image Converter (`scripts/ConvertImage.py`)  
+Convert HEIC images to JPG for broader compatibility:
+- **📱 HEIC/HEIF Support**: Handle iPhone/iOS photos seamlessly
+- **🔧 Quality Controls**: Configurable compression settings  
+- **📋 Metadata Preservation**: Maintains EXIF data during conversion
+- **⚡ Batch Processing**: Convert entire directories efficiently
 
-For detailed HTML converter documentation, see `HTML_README.md`.
+### AI Image Describer (`scripts/image_describer.py`)
+Generate natural language descriptions using local Ollama models:
+- **🤖 Multiple Models**: llava:7b, llama3.2-vision:11b, moondream, bakllava
+- **💬 Custom Prompts**: Configurable description styles (detailed, brief, technical)
+- **🏠 Local Processing**: No cloud dependencies, complete privacy
+- **📊 EXIF Integration**: Include camera settings, GPS, timestamps in output
+- **🧠 Memory Optimization**: Smart processing for large image collections
 
-## Configuration
+### HTML Report Generator (`scripts/descriptions_to_html.py`)
+Create beautiful web galleries from descriptions:
+- **🌐 Responsive Design**: Mobile-friendly layouts
+- **🎨 Professional Styling**: Clean, modern web interface
+- **🔍 Interactive Features**: Easy browsing and navigation
 
-The ImageDescriber uses a comprehensive JSON configuration system stored in `config.json`. This allows you to customize model settings, prompts, and output formats without modifying the code.
+## ⚙️ Configuration
 
-### Configuration Structure
+Configuration files are located in the `scripts/` directory:
+
+- **`scripts/workflow_config.json`** - Main workflow settings, step configuration, and output preferences
+- **`scripts/image_describer_config.json`** - AI model selection, prompts, and processing parameters  
+- **`scripts/video_frame_extractor_config.json`** - Video processing settings and frame extraction options
+
+### Example Workflow Configuration
 
 ```json
 {
-  "model_settings": {
-    "model": "moondream",          // Default model to use
-    "temperature": 0.1,            // Response creativity (0.0-1.0)
-    "num_predict": 600,            // Maximum description length
-    "top_k": 40,                   // Token selection diversity
-    "top_p": 0.9,                  // Response focus level
-    "repeat_penalty": 1.3          // Repetition avoidance
-  },
-  "prompt_variations": {
-    "detailed": "Describe this image in detail...",
-    "concise": "Describe this image concisely...",
-    "artistic": "Analyze this image from an artistic perspective...",
-    "technical": "Provide a technical analysis...",
-    "narrative": "Provide a narrative description..."
-  },
-  "processing_options": {
-    "extract_metadata": true,      // Extract EXIF metadata
-    "supported_formats": [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
-  },
-  "output_format": {
-    "include_timestamp": true,     // Include processing timestamp
-    "include_model_info": true,    // Include model information
-    "include_file_path": true,     // Include file path
-    "include_metadata": true,      // Include extracted metadata
-    "separator": "-"               // Entry separator character
+  "workflow": {
+    "default_steps": ["video", "convert", "describe", "html"],
+    "steps": {
+      "video_extraction": {
+        "config_file": "video_frame_extractor_config.json"
+      },
+      "image_conversion": {
+        "quality": 95,
+        "keep_metadata": true
+      },
+      "image_description": {
+        "model": "llava:7b",
+        "prompt_style": "detailed",
+        "config_file": "image_describer_config.json"
+      },
+      "html_generation": {
+        "title": "Image Analysis Report",
+        "include_details": false
+      }
+    }
   }
 }
 ```
 
-### Available Models
+## 🔧 Advanced Usage
 
-The system supports various Ollama vision models:
+### Workflow Examples
 
-- **moondream**: Compact and efficient (1.7B parameters) - **Recommended**
-- **llama3.2-vision**: High-quality descriptions (11B parameters)
-- **llava**: Various sizes available (7B, 13B, 34B)
-- **llava:7b**: Good balance of speed and quality
-- **llava:13b**: Higher quality, slower processing
+```bash
+# Process entire media collection (videos + images)
+python workflow.py /path/to/media/collection
 
-### Prompt Styles
+# Only generate descriptions and HTML (skip video/conversion)
+python workflow.py /path/to/images --steps describe,html
 
-The system includes several built-in prompt styles:
+# Use different AI model
+python workflow.py /path/to/images --model llama3.2-vision:11b
 
-- **detailed**: Comprehensive descriptions with all elements
-- **concise**: Brief but informative descriptions  
-- **artistic**: Focus on artistic and compositional elements
-- **technical**: Technical analysis of photography aspects
-- **narrative**: Story-like descriptions focusing on objects and colors
+# Custom output location
+python workflow.py /path/to/images --output-dir /custom/output/path
 
-You can add custom prompt styles by editing the `config.json` file.
+# Preview what will be processed
+python workflow.py /path/to/images --dry-run
 
-### Memory Optimization Options
-
-The ImageDescriber includes several memory optimization features:
-
-- `--max-size`: Maximum image dimension (default: 1024) - reduces memory usage
-- `--no-compression`: Disable image compression optimization  
-- `--batch-delay`: Delay between images in seconds (default: 1.0) - allows memory cleanup
-- `--max-files`: Limit number of files to process (useful for testing)
-
-### Python API
-
-You can also use the `ImageDescriber` class directly in your Python code:
-
-```python
-from pathlib import Path
-from image_describer import ImageDescriber
-
-# Create an instance
-describer = ImageDescriber(
-    model_name="moondream",
-    prompt_style="artistic",
-    config_file="config.json"
-)
-
-# Process a single image
-image_path = Path("path/to/image.jpg")
-description = describer.get_image_description(image_path)
-print(description)
-
-# Process a directory
-directory_path = Path("path/to/images")
-describer.process_directory(directory_path, recursive=True)
+# Get detailed logging
+python workflow.py /path/to/images --verbose
 ```
 
-## How It Works
+### Custom AI Models
 
-### Image Description Process
+```bash
+# Install additional Ollama models
+ollama pull llama3.2-vision:11b  # Larger, more capable model
+ollama pull moondream:latest     # Lightweight alternative
+ollama pull bakllava:latest      # Another vision model option
 
-1. **Image Detection**: Scans the specified directory for supported image formats
-2. **Metadata Extraction**: Extracts EXIF data including camera settings, GPS location, and timestamps
-3. **Image Optimization**: Resizes and compresses images for optimal processing
-4. **Description Generation**: Uses Ollama's vision model to analyze each image and generate descriptions
-5. **Output Generation**: Saves descriptions to text files with comprehensive metadata
-
-### Output Format
-
-The system generates `image_descriptions.txt` files containing:
-
-```
-File: IMG_001.jpg
-Path: /path/to/IMG_001.jpg
-Photo Date: 2024-01-15 14:30:22
-Location: GPS: 37.7749, -122.4194, Altitude: 10.0m
-Camera: Canon EOS R5, Lens: RF 24-70mm F2.8 L IS USM
-Settings: ISO: 200, Aperture: f/2.8, Shutter Speed: 1/500s, Focal Length: 35mm
-Model: moondream
-Prompt Style: artistic
-Description: A vibrant sunset over the ocean with dramatic orange and pink clouds...
-Timestamp: 2024-01-15 15:45:30
---------------------------------------------------------------------------------
+# Update scripts/image_describer_config.json to use your preferred model
 ```
 
-### Extracted Metadata
+### Output Structure
 
-The system extracts the following metadata from images:
+When you run the workflow, it creates a timestamped output directory:
 
-- **Date/Time**: When the photo was taken
-- **GPS Location**: Latitude, longitude, and altitude (if available)
-- **Camera Info**: Make, model, and lens information
-- **Technical Settings**: ISO, aperture, shutter speed, focal length
+```
+workflow_output_20250721_143022/
+├── logs/                     # Detailed processing logs
+│   ├── workflow_orchestrator_20250721_143022.log
+│   ├── video_frame_extractor_20250721_143023.log
+│   ├── image_converter_20250721_143024.log
+│   └── image_describer_20250721_143025.log
+├── extracted_frames/         # Video frames (if processing videos)
+├── converted_images/         # HEIC→JPG conversions (if needed)
+├── descriptions/            # AI-generated descriptions
+│   └── image_descriptions.txt
+└── reports/                 # HTML reports
+    └── image_descriptions.html
+```
 
-## Supported Image Formats
+## 🤝 Contributing
 
-### Image Description Tool
-- JPEG (.jpg, .jpeg)
-- PNG (.png)
-- BMP (.bmp)
-- TIFF (.tiff, .tif)
-- WebP (.webp)
+We welcome contributions! Here's how to get started:
 
-### HEIC Converter Tool
-- HEIC (.heic)
-- HEIF (.heif)
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Install development dependencies**: `pip install -r requirements.txt`
+4. **Test your setup**: `cd tests && python run_tests.py`
+5. **Make your changes**
+6. **Test the workflow**: `python workflow.py tests/test_files/ --dry-run`
+7. **Update documentation** if needed
+8. **Submit a pull request**
 
-## Error Handling
+### Development Guidelines
+- Follow PEP 8 style guidelines
+- Add tests for new functionality  
+- Ensure the workflow system continues to work end-to-end
+- Update documentation for new features
+- Test with multiple Python versions (3.8+)
 
-Both tools include robust error handling:
-- Continues processing even if individual images fail
-- Logs detailed error messages for troubleshooting
-- Validates Ollama availability before processing (ImageDescriber)
-- Checks for model availability (ImageDescriber)
-- Handles corrupted or unsupported files gracefully
+## 📞 Support & Documentation
 
-## Logging
+- **� Documentation**: Detailed guides available in the `docs/` directory
+- **🐛 Issues**: Report bugs or request features via [GitHub Issues](https://github.com/kellylford/Image-Description-Toolkit/issues)
+- **� Discussions**: Join conversations in [GitHub Discussions](https://github.com/kellylford/Image-Description-Toolkit/discussions)
+- **🧪 Testing**: Run `cd tests && python run_tests.py` to verify your setup
 
-The system provides detailed logging information:
-- Progress tracking for batch processing
-- Success/failure status for each image
-- Error messages with specific details
-- Summary statistics at completion
-- Memory usage optimization logging
+## 📄 License
 
-## Troubleshooting
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Common Issues
+---
 
-1. **Ollama not available:**
-   - Make sure Ollama is installed and running
-   - Check if the service is running: `ollama list`
+## � **Ready to Get Started?**
 
-2. **Model not found:**
-   - Install the required model: `ollama pull moondream`
-   - Check available models: `ollama list`
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-3. **Permission errors:**
-   - Ensure you have read/write permissions for the image directory
-   - Some image formats may be read-only
+# 2. Install Ollama and pull a vision model  
+ollama pull llava:7b
 
-4. **Memory issues:**
-   - **Try lighter models**: `moondream` or `llava:7b` instead of `llama3.2-vision`
-   - **Reduce image size**: Use `--max-size 512` or smaller
-   - **Process fewer images**: Use `--max-files 10` for testing
-   - **Increase delays**: Use `--batch-delay 2.0` for more time between images
-   - **Close other applications** to free up memory
+# 3. Test your setup
+cd tests && python run_tests.py
 
-5. **HEIC conversion issues:**
-   - Install required dependencies: `pip install pillow pillow-heif`
-   - On some systems, additional system libraries may be needed
+# 4. Process your first media collection
+python workflow.py path/to/your/media/files
 
-### Performance Tips
+# 5. Check the timestamped output directory for results!
+```
 
-- Use `moondream` model for fastest processing
-- Reduce `--max-size` to 512 or 256 for large image collections
-- Use `--batch-delay 1.0` or higher for memory-constrained systems
-- Process images in smaller batches using `--max-files`
-- Convert HEIC files to JPG first if processing many HEIC images
-
-## Performance Considerations
-
-- Processing time depends on image size, model complexity, and hardware
-- Vision models require significant computational resources
-- Consider processing images in batches for large directories
-- Network latency may affect processing if Ollama is running remotely
-- HEIC conversion is generally fast but depends on image size and quality settings
-
-## License
-
-This project is provided as-is for educational and personal use. Please ensure you have the necessary rights to process and modify your images.
-
-## Contributing
-
-Feel free to submit issues and enhancement requests! The project welcomes contributions for:
-- New prompt styles
-- Additional vision model support
-- Performance improvements
-- Bug fixes
-- Documentation improvements
-
-## Additional Resources
-
-- [Ollama Documentation](https://ollama.com/)
-- [Supported Vision Models](https://ollama.com/library?search=vision)
-- [PIL/Pillow Documentation](https://pillow.readthedocs.io/)
-- [EXIF Data Standards](https://exiv2.org/tags.html)
+**🎉 That's it!** The workflow system will handle the rest automatically.

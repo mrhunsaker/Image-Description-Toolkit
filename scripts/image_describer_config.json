@@ -1,6 +1,7 @@
 {
   "default_model": "moondream",
   "model_settings": {
+    "model": "moondream",
     "temperature": 0.1,
     "num_predict": 600,
     "top_k": 40,
@@ -70,7 +71,7 @@
   },
   "processing_options": {
     "default_max_image_size": 1024,
-    "default_batch_delay": 2,
+    "default_batch_delay": 2.0,
     "default_compression": true,
     "extract_metadata": true,
     "supported_formats": [
@@ -101,32 +102,22 @@
       "available_styles": "Run 'python config_helper.py styles' to see all available styles"
     },
     "available_models": {
-      "description": "List of supported Ollama vision models. Each model must be installed using 'ollama pull MODEL_NAME' before use.",
-      "installation": "Run 'ollama pull MODEL_NAME' to install a model (e.g., 'ollama pull llama3.2-vision')",
-      "selection": "Specify model in model_settings.model or use --model argument to override",
-      "recommendations": "moondream is recommended for best balance of speed and quality with low memory usage. Use llama3.2-vision for highest quality but requires more memory."
-    },
-    "output_format": {
-      "include_timestamp": "Whether to include timestamp in output file. Useful for tracking when descriptions were generated.",
-      "include_model_info": "Whether to include model information in output file. Helps track which model and prompt style was used.",
-      "include_file_path": "Whether to include full file path in output. Useful for organizing descriptions.",
-      "include_metadata": "Whether to include EXIF metadata from image files. Shows photo date, location, and camera info.",
-      "separator": "Character used to separate entries in output file. Use '-' for clean look or '=' for emphasis."
+      "description": "List of supported Ollama vision models with their specifications and requirements.",
+      "usage": "Use --model MODEL_NAME to override the default model"
     },
     "processing_options": {
-      "default_max_image_size": "Default maximum image dimension in pixels. Lower values save memory but may reduce description quality.",
-      "default_batch_delay": "Default delay between processing images in seconds. Higher values reduce memory usage but slow processing.",
-      "default_compression": "Whether to enable image compression by default. Saves memory but may affect description quality.",
-      "extract_metadata": "Whether to extract EXIF metadata from image files. When enabled, extracts all available metadata including datetime, location, camera, and technical information.",
-      "supported_formats": "List of supported image file extensions. Add new formats here if needed."
+      "default_max_image_size": "Maximum image dimension (width or height) in pixels. Larger images use more memory.",
+      "default_batch_delay": "Delay in seconds between processing images. Helps prevent memory buildup.",
+      "default_compression": "Whether to compress images before processing. Reduces memory usage.",
+      "extract_metadata": "Whether to extract EXIF metadata from images. Adds technical info to descriptions.",
+      "supported_formats": "List of image file extensions that the tool can process."
     },
-    "usage_examples": {
-      "basic": "python image_describer.py photos",
-      "with_style": "python image_describer.py photos --prompt-style artistic",
-      "with_model": "python image_describer.py photos --model llava:7b",
-      "memory_optimized": "python image_describer.py photos --model moondream --max-size 512",
-      "no_metadata": "python image_describer.py photos --no-metadata",
-      "custom_config": "python image_describer.py photos --config my_config.json"
+    "output_format": {
+      "include_timestamp": "Whether to include processing timestamp for each image",
+      "include_model_info": "Whether to include model name and prompt style in output",
+      "include_file_path": "Whether to include full file path in descriptions",
+      "include_metadata": "Whether to include extracted EXIF metadata in descriptions",
+      "separator": "Character used to separate entries in the output file"
     }
   }
 }

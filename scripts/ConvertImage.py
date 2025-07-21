@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 HEIC to JPG Converter
 
@@ -10,15 +11,61 @@ Use this tool to convert HEIC images to JPG format before processing
 with the main ImageDescriber script.
 """
 
-import os
 import sys
+import os
 import argparse
+import logging
+import time
 from pathlib import Path
 from PIL import Image
+from datetime import datetime
+
+# Set UTF-8 encoding for console output on Windows
+if sys.platform.startswith('win'):
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
 import pillow_heif
 
 # Register HEIF opener with PIL
 pillow_heif.register_heif_opener()
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+def setup_logging(log_dir=None, verbose=False):
+    """Setup logging for the converter"""
+    global logger
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # Set logging level
+    level = logging.DEBUG if verbose else logging.INFO
+    logger.setLevel(level)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler if log_dir is provided
+    if log_dir:
+        log_dir = Path(log_dir)
+        log_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = log_dir / f"convert_image_{timestamp}.log"
+        
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        
+        logger.info(f"Convert Image log file: {log_filename.absolute()}")
 
 
 def convert_heic_to_jpg(input_path, output_path=None, quality=95, keep_metadata=True):
@@ -65,11 +112,11 @@ def convert_heic_to_jpg(input_path, output_path=None, quality=95, keep_metadata=
             
             image.save(output_path, **save_kwargs)
         
-        print(f"✅ Converted: {input_path.name} -> {output_path.name}")
+        logger.info(f"Successfully converted: {input_path.name} -> {output_path.name}")
         return True
         
     except Exception as e:
-        print(f"❌ Failed to convert {input_path}: {e}")
+        logger.error(f"Failed to convert {input_path}: {e}")
         return False
 
 
@@ -79,7 +126,7 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     
     Args:
         directory_path: Path to the directory containing HEIC files
-        output_directory: Output directory (default: creates 'converted' subdirectory)
+        output_directory: Output directory (default: workflow_output/converted_images/)
         recursive: Whether to process subdirectories recursively
         quality: JPEG quality (1-100, default 95)
         keep_metadata: Whether to preserve metadata (default True)
@@ -90,18 +137,31 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     directory_path = Path(directory_path)
     
     if not directory_path.exists():
-        print(f"❌ Directory does not exist: {directory_path}")
+        logger.error(f"Directory does not exist: {directory_path}")
         return 0, 0
     
     if not directory_path.is_dir():
-        print(f"❌ Path is not a directory: {directory_path}")
+        logger.error(f"Path is not a directory: {directory_path}")
         return 0, 0
+    
+    logger.info(f"Starting HEIC conversion in directory: {directory_path}")
+    start_time = time.time()
     
     # Set up output directory
     if output_directory is None:
-        output_directory = directory_path / "converted"
+        # Use workflow output directory
+        try:
+            from workflow_utils import WorkflowConfig
+            config = WorkflowConfig()
+            output_directory = config.get_step_output_dir("image_conversion", create=True)
+            logger.info(f"Using workflow output directory: {output_directory}")
+        except ImportError:
+            # Fallback if workflow_utils not available
+            output_directory = directory_path / "converted"
+            logger.info(f"Using fallback output directory: {output_directory}")
     else:
         output_directory = Path(output_directory)
+        logger.info(f"Using specified output directory: {output_directory}")
     
     output_directory.mkdir(parents=True, exist_ok=True)
     
@@ -114,15 +174,17 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
     heic_files.extend(directory_path.glob(heif_pattern))
     
     if not heic_files:
-        print(f"📁 No HEIC/HEIF files found in {directory_path}")
+        logger.info(f"No HEIC/HEIF files found in {directory_path}")
         return 0, 0
     
-    print(f"🔍 Found {len(heic_files)} HEIC/HEIF files to convert")
+    logger.info(f"Found {len(heic_files)} HEIC/HEIF files to convert")
     
     successful = 0
     failed = 0
     
-    for heic_file in heic_files:
+    for i, heic_file in enumerate(heic_files, 1):
+        logger.info(f"Converting file {i}/{len(heic_files)}: {heic_file.name}")
+        
         # Preserve directory structure in output
         if recursive:
             relative_path = heic_file.relative_to(directory_path)
@@ -135,10 +197,20 @@ def convert_directory(directory_path, output_directory=None, recursive=False, qu
         else:
             failed += 1
     
-    print(f"\n📊 Conversion complete:")
-    print(f"   ✅ Successful: {successful}")
-    print(f"   ❌ Failed: {failed}")
-    print(f"   📁 Output directory: {output_directory}")
+    # Final statistics
+    elapsed_time = time.time() - start_time
+    
+    logger.info("="*50)
+    logger.info("CONVERSION SUMMARY")
+    logger.info("="*50)
+    logger.info(f"Total files processed: {len(heic_files)}")
+    logger.info(f"Successful conversions: {successful}")
+    logger.info(f"Failed conversions: {failed}")
+    logger.info(f"Processing time: {elapsed_time:.2f} seconds")
+    if len(heic_files) > 0:
+        logger.info(f"Average time per file: {elapsed_time/len(heic_files):.2f} seconds")
+    logger.info(f"Output directory: {output_directory}")
+    logger.info("="*50)
     
     return successful, failed
 
@@ -189,12 +261,26 @@ Examples:
         help="Don't preserve metadata in converted files"
     )
     
+    parser.add_argument(
+        "--log-dir",
+        help="Directory for log files (default: auto-detect workflow directory)"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+    
     args = parser.parse_args()
+    
+    # Setup logging before any processing
+    setup_logging(args.log_dir, args.verbose)
     
     input_path = Path(args.input)
     
     if not input_path.exists():
-        print(f"❌ Input path does not exist: {input_path}")
+        logger.error(f"Input path does not exist: {input_path}")
         sys.exit(1)
     
     # Check if pillow-heif is properly installed
@@ -202,14 +288,14 @@ Examples:
         # Test if HEIF support is available
         test_formats = Image.registered_extensions()
         if '.heic' not in test_formats and '.heif' not in test_formats:
-            print("⚠️  Warning: HEIF support may not be properly registered")
+            logger.warning("HEIF support may not be properly registered")
     except Exception as e:
-        print(f"⚠️  Warning: Issue with HEIF support: {e}")
+        logger.warning(f"Issue with HEIF support: {e}")
     
     if input_path.is_file():
         # Convert single file
         if not input_path.suffix.lower() in ['.heic', '.heif']:
-            print(f"❌ File is not a HEIC/HEIF file: {input_path}")
+            logger.error(f"File is not a HEIC/HEIF file: {input_path}")
             sys.exit(1)
         
         output_file = args.output
@@ -238,7 +324,7 @@ Examples:
         sys.exit(0 if failed == 0 else 1)
     
     else:
-        print(f"❌ Invalid input path: {input_path}")
+        logger.error(f"Invalid input path: {input_path}")
         sys.exit(1)
 
 
