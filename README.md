@@ -1,210 +1,245 @@
 # Image Description Toolkit
 
-An AI-powered toolkit for generating descriptive text from images using local language models via Ollama. This toolkit provides both individual scripts for specific tasks and a unified workflow system for processing multiple images efficiently.
+An AI-powered toolkit for generating descriptive text from images using local language models via Ollama. The toolkit provides a unified workflow system that orchestrates the entire pipeline from video frame extraction through HTML report generation, making it simple to process large collections of media files.
 
 ## 🌟 Features
 
-- **AI-Powered Descriptions**: Generate natural language descriptions using local Ollama models
-- **Flexible Workflow System**: Unified pipeline for processing multiple images
-- **Image Format Conversion**: Convert between various image formats (including HEIC to JPG)
-- **Video Frame Extraction**: Extract frames from videos for analysis
-- **Batch Processing**: Handle multiple files efficiently
-- **HTML Export**: Convert descriptions to formatted HTML galleries
-- **Comprehensive Testing**: Automated test suite with 29+ test cases
-- **Professional Project Structure**: Organized codebase with proper separation of concerns
+- **🔄 Unified Workflow System**: Complete pipeline from video → frames → images → descriptions → HTML reports
+- **🤖 AI-Powered Descriptions**: Generate natural language descriptions using local Ollama models
+- **🎥 Video Frame Extraction**: Extract frames from videos for analysis
+- **🖼️ Image Format Conversion**: Convert HEIC images to JPG automatically
+- **📄 HTML Report Generation**: Create beautiful web galleries with descriptions
+- **⚡ Batch Processing**: Handle multiple files and directories efficiently
+- **📊 Comprehensive Logging**: Professional logging with statistics and progress tracking
+- **🛠️ Individual Script Access**: Use components separately when needed
 
 ## 📁 Project Structure
 
 ```
 Image-Description-Toolkit/
-├── docs/                      # Documentation
-│   ├── BLOG_POST.md           # Project overview and use cases
-│   ├── CONFIGURATION.md       # Configuration guide
-│   ├── CONVERT_README.md      # Image conversion documentation
-│   ├── HTML_README.md         # HTML export guide
-│   ├── VideoREADME.md         # Video processing guide
-│   └── WORKFLOW_README.md     # Workflow system documentation
-├── tests/                     # Test suite and test files
-│   ├── test_files/           # Test images and data
-│   ├── comprehensive_test.py # Complete test suite (29 tests)
-│   ├── generate_test_images.py # Test image generator
-│   ├── run_tests.py         # Test runner
-│   ├── demo_workflow.py     # Demo and testing
-│   └── test_workflow.py     # Workflow testing
-├── scripts/                   # Utility scripts
-│   ├── convert_mkv_to_mp4.bat # Video conversion utility
-│   ├── debug_ollama.py        # Ollama debugging tools
-│   ├── descriptions_to_html.py # HTML export utility
-│   └── html_converter.py      # HTML conversion tools
-├── config/                    # Configuration files
-│   ├── image_describer_config.json      # AI model settings
-│   ├── video_frame_extractor_config.json # Video processing config
-│   └── workflow_config.json             # Workflow system config
-├── workflow.py               # Main workflow system
-├── workflow_utils.py         # Workflow utilities
-├── image_describer.py        # AI image description engine
-├── ConvertImage.py           # Image format conversion
-├── video_frame_extractor.py  # Video frame extraction
-├── requirements.txt          # Python dependencies
-├── .gitignore               # Git ignore rules
-└── README.md                # This file
+├── workflow.py                # 🎯 Main entry point - workflow wrapper
+├── scripts/                   # 🔧 Core processing scripts
+│   ├── workflow.py           #    Workflow orchestrator (main engine)
+│   ├── video_frame_extractor.py #    Extract frames from videos
+│   ├── ConvertImage.py       #    Convert HEIC to JPG
+│   ├── image_describer.py    #    AI image description
+│   ├── descriptions_to_html.py #    Generate HTML reports
+│   ├── workflow_utils.py     #    Workflow utilities
+│   ├── workflow_config.json  #    Workflow configuration
+│   ├── image_describer_config.json # AI model settings
+│   └── video_frame_extractor_config.json # Video processing config
+├── docs/                     # 📚 Documentation
+├── tests/                    # 🧪 Test suite and test files
+├── requirements.txt          # 📦 Python dependencies
+├── .gitignore               # 🚫 Git ignore rules
+└── README.md                # 📖 This file
 ```
 
 ## 🚀 Quick Start
 
-1. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Primary Usage (Recommended)
 
-2. **Install Ollama** (for AI descriptions)
-   ```bash
-   # Download from https://ollama.ai/
-   ollama pull llava:7b  # or your preferred vision model
-   ```
+The **workflow system** is the main way to use this toolkit:
 
-3. **Run the Workflow System**
-   ```bash
-   python workflow.py path/to/your/images
-   ```
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-4. **Or Use Individual Scripts**
-   ```bash
-   # Generate descriptions
-   python image_describer.py path/to/images
+# 2. Install Ollama and a vision model
+# Download from https://ollama.ai/
+ollama pull llava:7b  # or llama3.2-vision:11b, moondream, etc.
 
-   # Convert image formats
-   python ConvertImage.py input.heic output.jpg
+# 3. Process your media files (videos + images)
+python workflow.py path/to/your/media
 
-   # Extract video frames
-   python video_frame_extractor.py video.mp4
+# 4. Find results in timestamped output directory
+# -> workflow_output_YYYYMMDD_HHMMSS/
+```
 
-   # Convert descriptions to HTML
-   python scripts/descriptions_to_html.py descriptions/
-   ```
+### Workflow Steps
+
+The workflow automatically handles:
+1. **Video Processing** → Extract frames from MP4, MOV, AVI files  
+2. **Image Conversion** → Convert HEIC to JPG  
+3. **AI Description** → Generate descriptions using Ollama models  
+4. **HTML Generation** → Create beautiful web gallery with descriptions
+
+### Advanced Workflow Usage
+
+```bash
+# Process only specific steps
+python workflow.py media/ --steps describe,html
+
+# Use custom output directory
+python workflow.py media/ --output-dir my_results
+
+# Override AI model
+python workflow.py media/ --model llama3.2-vision:11b
+
+# Dry run (see what would be processed)
+python workflow.py media/ --dry-run
+
+# Verbose logging
+python workflow.py media/ --verbose
+```
+
+### Individual Script Usage (Advanced)
+
+When you need fine-grained control, you can use scripts directly:
+
+```bash
+# Video frame extraction
+cd scripts
+python video_frame_extractor.py path/to/videos
+
+# Image format conversion  
+python ConvertImage.py path/to/heic/files --output converted/
+
+# AI image descriptions
+python image_describer.py path/to/images --model llava:7b
+
+# HTML report generation
+python descriptions_to_html.py descriptions.txt report.html
+```
 
 ## 🧪 Testing
 
-Run the comprehensive test suite:
-
 ```bash
-# Quick tests (no AI dependencies required)
+# Run test suite
 cd tests
 python run_tests.py
 
-# Full test suite (requires Ollama)
-python comprehensive_test.py --verbose
-
-# Individual test categories
-python comprehensive_test.py --individual  # Test individual scripts
-python comprehensive_test.py --workflow    # Test workflow system
+# Test individual components
+python test_workflow.py
 ```
-
-The test suite includes 29+ automated tests covering:
-- ✅ **Dependency verification** - Check all required packages
-- ✅ **Configuration validation** - Verify config files are valid
-- ✅ **Individual script functionality** - Test each component independently
-- ✅ **Workflow system integration** - End-to-end workflow testing
-- ✅ **File handling and error cases** - Robust error handling validation
-- ✅ **Output format validation** - Ensure proper output generation
-
-## 📖 Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-- **[Configuration Guide](docs/CONFIGURATION.md)** - Setup and configuration options
-- **[Workflow System](docs/WORKFLOW_README.md)** - Unified processing pipeline
-- **[Video Processing](docs/VideoREADME.md)** - Video frame extraction guide
-- **[HTML Export](docs/HTML_README.md)** - Converting descriptions to HTML
-- **[Image Conversion](docs/CONVERT_README.md)** - Format conversion tools
-- **[Blog Post](docs/BLOG_POST.md)** - Project overview and use cases
 
 ## 🛠️ Core Components
 
-### Workflow System (`workflow.py`)
-Unified pipeline that orchestrates the entire process:
-- **Auto-discovery**: Finds image files automatically
-- **Multi-stage processing**: Handles conversion, description, and export
-- **Progress tracking**: Real-time progress monitoring
-- **Error resilience**: Continues processing despite individual failures
-- **Comprehensive reporting**: Detailed logs and summaries
+### Workflow System (`workflow.py` → `scripts/workflow.py`)
+The main orchestrator that provides a unified processing pipeline:
+- **🎯 Simple Entry Point**: Just run `python workflow.py media_folder`
+- **🔄 Complete Pipeline**: Handles video→frames→conversion→descriptions→HTML
+- **📊 Progress Tracking**: Real-time logging with comprehensive statistics  
+- **🛡️ Error Resilience**: Continues processing despite individual file failures
+- **⚙️ Flexible Configuration**: Support for custom models, output directories, and step selection
+- **📋 Professional Logging**: Timestamped logs with detailed statistics and summaries
 
-### Image Describer (`image_describer.py`)
-AI-powered image analysis using local Ollama models:
-- **Multiple models**: Support for llava, moondream, llama3.2-vision, etc.
-- **Custom prompts**: Configurable description prompts
-- **Batch processing**: Efficient handling of multiple images
-- **EXIF extraction**: Camera settings, GPS, timestamps
-- **Memory optimization**: Smart memory management for large collections
-
-### Image Converter (`ConvertImage.py`)
-Format conversion utilities with advanced features:
-- **Wide format support**: JPEG, PNG, WebP, BMP, TIFF, HEIC/HEIF
-- **Quality controls**: Configurable compression and quality settings
-- **Metadata preservation**: Maintains EXIF data during conversion
-- **Batch operations**: Convert entire directories efficiently
-
-### Video Frame Extractor (`video_frame_extractor.py`)
+### Video Frame Extractor (`scripts/video_frame_extractor.py`)
 Extract frames from videos for image analysis:
-- **Flexible intervals**: Time-based or frame-based extraction
-- **Quality options**: Configurable output resolution and format
-- **Multiple formats**: Supports most common video formats
-- **Organized output**: Systematic frame numbering and organization
+- **🎬 Multiple Formats**: MP4, MOV, AVI, MKV support
+- **⏱️ Flexible Extraction**: Time-based intervals (e.g., every 5 seconds)
+- **🖼️ Quality Control**: Configurable resolution and image quality
+- **📁 Organized Output**: Systematic frame numbering and folder structure
 
-### HTML Gallery Generator (`scripts/descriptions_to_html.py`)
-Convert descriptions to beautiful web galleries:
-- **Responsive design**: Mobile-friendly layouts
-- **Accessibility compliant**: WCAG 2.1 standards
-- **Interactive features**: Lightbox, filtering, search
-- **Custom styling**: Configurable themes and layouts
+### Image Converter (`scripts/ConvertImage.py`)  
+Convert HEIC images to JPG for broader compatibility:
+- **📱 HEIC/HEIF Support**: Handle iPhone/iOS photos seamlessly
+- **🔧 Quality Controls**: Configurable compression settings  
+- **📋 Metadata Preservation**: Maintains EXIF data during conversion
+- **⚡ Batch Processing**: Convert entire directories efficiently
+
+### AI Image Describer (`scripts/image_describer.py`)
+Generate natural language descriptions using local Ollama models:
+- **🤖 Multiple Models**: llava:7b, llama3.2-vision:11b, moondream, bakllava
+- **💬 Custom Prompts**: Configurable description styles (detailed, brief, technical)
+- **🏠 Local Processing**: No cloud dependencies, complete privacy
+- **📊 EXIF Integration**: Include camera settings, GPS, timestamps in output
+- **🧠 Memory Optimization**: Smart processing for large image collections
+
+### HTML Report Generator (`scripts/descriptions_to_html.py`)
+Create beautiful web galleries from descriptions:
+- **🌐 Responsive Design**: Mobile-friendly layouts
+- **🎨 Professional Styling**: Clean, modern web interface
+- **🔍 Interactive Features**: Easy browsing and navigation
 
 ## ⚙️ Configuration
 
-Each component has dedicated configuration in the `config/` directory:
+Configuration files are located in the `scripts/` directory:
 
-- **`workflow_config.json`** - Workflow system settings and processing options
-- **`image_describer_config.json`** - AI model selection, prompts, and parameters
-- **`video_frame_extractor_config.json`** - Video processing settings and output options
+- **`scripts/workflow_config.json`** - Main workflow settings, step configuration, and output preferences
+- **`scripts/image_describer_config.json`** - AI model selection, prompts, and processing parameters  
+- **`scripts/video_frame_extractor_config.json`** - Video processing settings and frame extraction options
 
-Configuration files use JSON format with comprehensive validation and documentation.
+### Example Workflow Configuration
+
+```json
+{
+  "workflow": {
+    "default_steps": ["video", "convert", "describe", "html"],
+    "steps": {
+      "video_extraction": {
+        "config_file": "video_frame_extractor_config.json"
+      },
+      "image_conversion": {
+        "quality": 95,
+        "keep_metadata": true
+      },
+      "image_description": {
+        "model": "llava:7b",
+        "prompt_style": "detailed",
+        "config_file": "image_describer_config.json"
+      },
+      "html_generation": {
+        "title": "Image Analysis Report",
+        "include_details": false
+      }
+    }
+  }
+}
+```
 
 ## 🔧 Advanced Usage
 
+### Workflow Examples
+
+```bash
+# Process entire media collection (videos + images)
+python workflow.py /path/to/media/collection
+
+# Only generate descriptions and HTML (skip video/conversion)
+python workflow.py /path/to/images --steps describe,html
+
+# Use different AI model
+python workflow.py /path/to/images --model llama3.2-vision:11b
+
+# Custom output location
+python workflow.py /path/to/images --output-dir /custom/output/path
+
+# Preview what will be processed
+python workflow.py /path/to/images --dry-run
+
+# Get detailed logging
+python workflow.py /path/to/images --verbose
+```
+
 ### Custom AI Models
-```bash
-# Install and configure custom Ollama models
-ollama pull bakllava:latest
-ollama pull moondream:latest
 
-# Update config/image_describer_config.json to use your preferred model
+```bash
+# Install additional Ollama models
+ollama pull llama3.2-vision:11b  # Larger, more capable model
+ollama pull moondream:latest     # Lightweight alternative
+ollama pull bakllava:latest      # Another vision model option
+
+# Update scripts/image_describer_config.json to use your preferred model
 ```
 
-### Batch Processing
-```bash
-# Process entire directory trees
-python workflow.py /path/to/images --recursive
+### Output Structure
 
-# Process with custom configuration
-python workflow.py /path/to/images --config custom_config.json
+When you run the workflow, it creates a timestamped output directory:
 
-# Process videos and extract frames first
-python video_frame_extractor.py /path/to/videos
-python workflow.py /path/to/extracted/frames
 ```
-
-### Integration Examples
-```python
-# Use components programmatically
-from workflow_utils import WorkflowManager
-from image_describer import ImageDescriber
-
-# Setup workflow
-manager = WorkflowManager('config/workflow_config.json')
-results = manager.process_directory('/path/to/images')
-
-# Direct API usage
-describer = ImageDescriber('config/image_describer_config.json')
-description = describer.describe_image('/path/to/image.jpg')
+workflow_output_20250721_143022/
+├── logs/                     # Detailed processing logs
+│   ├── workflow_orchestrator_20250721_143022.log
+│   ├── video_frame_extractor_20250721_143023.log
+│   ├── image_converter_20250721_143024.log
+│   └── image_describer_20250721_143025.log
+├── extracted_frames/         # Video frames (if processing videos)
+├── converted_images/         # HEIC→JPG conversions (if needed)
+├── descriptions/            # AI-generated descriptions
+│   └── image_descriptions.txt
+└── reports/                 # HTML reports
+    └── image_descriptions.html
 ```
 
 ## 🤝 Contributing
@@ -214,79 +249,48 @@ We welcome contributions! Here's how to get started:
 1. **Fork the repository**
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
 3. **Install development dependencies**: `pip install -r requirements.txt`
-4. **Run the test suite**: `cd tests && python run_tests.py`
+4. **Test your setup**: `cd tests && python run_tests.py`
 5. **Make your changes**
-6. **Ensure all tests pass**: Test suite must show 29/29 tests passing
+6. **Test the workflow**: `python workflow.py tests/test_files/ --dry-run`
 7. **Update documentation** if needed
 8. **Submit a pull request**
 
 ### Development Guidelines
 - Follow PEP 8 style guidelines
-- Add tests for new functionality
+- Add tests for new functionality  
+- Ensure the workflow system continues to work end-to-end
 - Update documentation for new features
-- Ensure backward compatibility
 - Test with multiple Python versions (3.8+)
 
-## 📋 Requirements
+## 📞 Support & Documentation
 
-### System Requirements
-- **Python 3.8+** - Core runtime environment
-- **Ollama** - For AI-powered image descriptions
-- **ffmpeg** - For video processing (optional, for video frame extraction)
-
-### Python Dependencies
-See `requirements.txt` for the complete list. Key dependencies include:
-- `ollama>=0.3.0` - Ollama Python client
-- `Pillow>=10.0.0` - Image processing
-- `opencv-python>=4.8.0` - Video processing
-- `numpy>=1.24.0` - Numerical operations
-
-### Optional Dependencies
-- **Nvidia GPU drivers** - For faster AI processing
-- **CUDA toolkit** - GPU acceleration (if available)
-
-## 🎯 Use Cases
-
-### Content Creation
-- **Website Alt-Text**: Generate accessible descriptions for web images
-- **Social Media**: Create engaging captions for posts
-- **Documentation**: Catalog and describe image collections
-- **SEO Optimization**: Generate keyword-rich image descriptions
-
-### Accessibility
-- **Screen Readers**: Provide detailed descriptions for visually impaired users
-- **WCAG Compliance**: Meet accessibility standards for web content
-- **Educational Content**: Describe diagrams, charts, and visual materials
-
-### Research & Analysis
-- **Dataset Analysis**: Process large collections of research images
-- **Content Classification**: Categorize images based on descriptions
-- **Quality Assessment**: Evaluate image content systematically
-- **Metadata Enhancement**: Enrich existing image databases
-
-### Media Processing
-- **Video Analysis**: Extract and analyze key frames from videos
-- **Format Migration**: Convert legacy image formats to modern standards
-- **Batch Processing**: Handle large media libraries efficiently
-- **Archive Management**: Organize and describe historical image collections
+- **� Documentation**: Detailed guides available in the `docs/` directory
+- **🐛 Issues**: Report bugs or request features via [GitHub Issues](https://github.com/kellylford/Image-Description-Toolkit/issues)
+- **� Discussions**: Join conversations in [GitHub Discussions](https://github.com/kellylford/Image-Description-Toolkit/discussions)
+- **🧪 Testing**: Run `cd tests && python run_tests.py` to verify your setup
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- **Ollama Team** - For providing excellent local AI model infrastructure
-- **Python Community** - For the robust ecosystem of image processing libraries
-- **Contributors** - Everyone who has helped improve this toolkit
-
-## 📞 Support
-
-- **Issues**: Report bugs or request features via GitHub Issues
-- **Documentation**: Check the `docs/` directory for detailed guides
-- **Testing**: Run `cd tests && python run_tests.py` to verify your setup
-- **Community**: Join discussions in GitHub Discussions
-
 ---
 
-**Ready to get started?** Run `cd tests && python run_tests.py` to verify your setup, then try `python workflow.py --help` to see all available options!
+## � **Ready to Get Started?**
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Install Ollama and pull a vision model  
+ollama pull llava:7b
+
+# 3. Test your setup
+cd tests && python run_tests.py
+
+# 4. Process your first media collection
+python workflow.py path/to/your/media/files
+
+# 5. Check the timestamped output directory for results!
+```
+
+**🎉 That's it!** The workflow system will handle the rest automatically.
