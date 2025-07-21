@@ -38,6 +38,7 @@ from datetime import datetime
 
 # Import our workflow utilities
 from workflow_utils import WorkflowConfig, WorkflowLogger, FileDiscovery, create_workflow_paths
+from image_describer import get_default_prompt_style
 
 
 class WorkflowOrchestrator:
@@ -249,7 +250,8 @@ class WorkflowOrchestrator:
                     sys.executable, "image_describer.py",
                     str(search_dir),
                     "--recursive",
-                    "--output-dir", str(output_dir)
+                    "--output-dir", str(output_dir),
+                    "--log-dir", str(self.config.base_output_dir / "logs")
                 ]
                 
                 # Add optional parameters
@@ -259,8 +261,15 @@ class WorkflowOrchestrator:
                 if "model" in step_config and step_config["model"]:
                     cmd.extend(["--model", step_config["model"]])
                 
+                # Handle prompt style - use config file default if not explicitly set
                 if "prompt_style" in step_config and step_config["prompt_style"]:
                     cmd.extend(["--prompt-style", step_config["prompt_style"]])
+                else:
+                    # Get default prompt style from image describer config
+                    config_file = step_config.get("config_file", "image_describer_config.json")
+                    default_style = get_default_prompt_style(config_file)
+                    if default_style != "detailed":  # Only add if different from hardcoded default
+                        cmd.extend(["--prompt-style", default_style])
                 
                 # For first directory, create new file; for subsequent directories, the script will append automatically
                 self.logger.info(f"Running: {' '.join(cmd)}")

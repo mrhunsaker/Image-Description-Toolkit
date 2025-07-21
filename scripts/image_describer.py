@@ -34,12 +34,54 @@ from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 
 
-# Configure logging
+# Configure basic logging (will be enhanced in main() if log-dir is provided)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def setup_logging(log_dir: Optional[str] = None, verbose: bool = False) -> None:
+    """
+    Set up logging configuration for the image describer
+    
+    Args:
+        log_dir: Directory to write log files to
+        verbose: Whether to enable debug logging
+    """
+    global logger
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # Set logging level
+    level = logging.DEBUG if verbose else logging.INFO
+    logger.setLevel(level)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler if log_dir is provided
+    if log_dir:
+        log_path = Path(log_dir)
+        log_path.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        log_filename = log_path / f"image_describer_{timestamp}.log"
+        
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        
+        logger.info(f"Image describer log file: {log_filename.absolute()}")
 
 
 class ImageDescriber:
@@ -443,8 +485,13 @@ class ImageDescriber:
         
         # Process each image with memory management
         success_count = 0
+        overall_start_time = time.time()
+        
         for i, image_path in enumerate(image_files, 1):
-            logger.info(f"Processing image {i}/{len(image_files)}: {image_path.name}")
+            # Log progress and start time for this image
+            logger.info(f"Describing image {i} of {len(image_files)}: {image_path.name}")
+            image_start_time = time.time()
+            logger.info(f"Start time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(image_start_time))}")
             
             # Extract metadata from image
             metadata = self.extract_metadata(image_path)
@@ -455,6 +502,12 @@ class ImageDescriber:
             
             # Get description from Ollama
             description = self.get_image_description(image_path)
+            
+            # Log end time for this image
+            image_end_time = time.time()
+            processing_duration = image_end_time - image_start_time
+            logger.info(f"End time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(image_end_time))}")
+            logger.info(f"Processing duration: {processing_duration:.2f} seconds")
             
             if description:
                 # Write description to file with metadata
@@ -471,7 +524,12 @@ class ImageDescriber:
                 time.sleep(self.batch_delay)
             gc.collect()
         
+        # Log overall completion summary
+        overall_end_time = time.time()
+        total_duration = overall_end_time - overall_start_time
         logger.info(f"Processing complete. Successfully processed {success_count}/{len(image_files)} images")
+        logger.info(f"Total processing time: {total_duration:.2f} seconds")
+        logger.info(f"Average time per image: {total_duration/len(image_files):.2f} seconds")
         logger.info(f"Descriptions saved to: {output_file}")
     
     def extract_metadata(self, image_path: Path) -> Dict[str, Any]:
@@ -878,6 +936,11 @@ Configuration:
         help="Output directory for description file (default: workflow_output/descriptions/)"
     )
     parser.add_argument(
+        "--log-dir",
+        type=str,
+        help="Directory for log files (default: uses workflow output/logs)"
+    )
+    parser.add_argument(
         "--prompt-style",
         type=str,
         default=default_style,
@@ -892,9 +955,8 @@ Configuration:
     
     args = parser.parse_args()
     
-    # Set logging level
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # Set up logging with log directory and verbosity
+    setup_logging(log_dir=args.log_dir, verbose=args.verbose)
     
     # Convert directory path to Path object
     directory_path = Path(args.directory)
