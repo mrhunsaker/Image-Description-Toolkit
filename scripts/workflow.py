@@ -43,15 +43,18 @@ from workflow_utils import WorkflowConfig, WorkflowLogger, FileDiscovery, create
 class WorkflowOrchestrator:
     """Main workflow orchestrator class"""
     
-    def __init__(self, config_file: str = "workflow_config.json"):
+    def __init__(self, config_file: str = "workflow_config.json", base_output_dir: Optional[Path] = None):
         """
         Initialize the workflow orchestrator
         
         Args:
             config_file: Path to workflow configuration file
+            base_output_dir: Base output directory for the workflow
         """
         self.config = WorkflowConfig(config_file)
-        self.logger = WorkflowLogger("workflow_orchestrator")
+        if base_output_dir:
+            self.config.set_base_output_dir(base_output_dir)
+        self.logger = WorkflowLogger("workflow_orchestrator", base_output_dir=self.config.base_output_dir)
         self.discovery = FileDiscovery(self.config)
         
         # Available workflow steps
@@ -99,7 +102,8 @@ class WorkflowOrchestrator:
             cmd = [
                 sys.executable, "video_frame_extractor.py",
                 str(input_dir),
-                "--config", config_file
+                "--config", config_file,
+                "--log-dir", str(self.config.base_output_dir)
             ]
             
             self.logger.info(f"Running: {' '.join(cmd)}")
@@ -576,7 +580,9 @@ Examples:
         if not output_dir.is_absolute():
             output_dir = (Path(original_cwd) / output_dir).resolve()
     else:
-        output_dir = (Path(original_cwd) / "workflow_output").resolve()
+        # Create timestamped workflow output directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = (Path(original_cwd) / f"workflow_output_{timestamp}").resolve()
     
     # Parse workflow steps
     steps = [step.strip() for step in args.steps.split(",")]
@@ -599,7 +605,7 @@ Examples:
     
     # Create orchestrator
     try:
-        orchestrator = WorkflowOrchestrator(args.config)
+        orchestrator = WorkflowOrchestrator(args.config, base_output_dir=output_dir)
         
         # Override configuration if specified
         if args.model:

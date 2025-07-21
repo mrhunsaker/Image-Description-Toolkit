@@ -119,7 +119,7 @@ class WorkflowConfig:
 class WorkflowLogger:
     """Centralized logging for workflow operations"""
     
-    def __init__(self, name: str = "workflow", log_level: str = "INFO", log_to_file: bool = True):
+    def __init__(self, name: str = "workflow", log_level: str = "INFO", log_to_file: bool = True, base_output_dir: Optional[Path] = None):
         """
         Initialize workflow logger
         
@@ -127,6 +127,7 @@ class WorkflowLogger:
             name: Logger name
             log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
             log_to_file: Whether to log to file
+            base_output_dir: Base output directory for log files (if None, uses workflow_output)
         """
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, log_level.upper()))
@@ -146,13 +147,19 @@ class WorkflowLogger:
         # File handler
         if log_to_file:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_filename = f"workflow_{timestamp}.log"
+            # Create logs directory in base_output_dir or workflow_output if it doesn't exist
+            if base_output_dir:
+                logs_dir = base_output_dir / "logs"
+            else:
+                logs_dir = Path("workflow_output") / "logs"
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            log_filename = logs_dir / f"workflow_{timestamp}.log"
             file_handler = logging.FileHandler(log_filename, encoding='utf-8')
             file_handler.setLevel(getattr(logging, log_level.upper()))
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
             
-            self.logger.info(f"Workflow log file: {os.path.abspath(log_filename)}")
+            self.logger.info(f"Workflow log file: {log_filename.absolute()}")
     
     def info(self, message: str) -> None:
         """Log info message"""

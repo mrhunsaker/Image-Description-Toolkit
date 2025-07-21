@@ -16,9 +16,10 @@ import logging
 from datetime import datetime
 
 class VideoFrameExtractor:
-    def __init__(self, config_file: str = "video_frame_extractor_config.json"):
+    def __init__(self, config_file: str = "video_frame_extractor_config.json", log_dir: str = None):
         self.supported_formats = {'.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
         self.config = self.load_config(config_file)
+        self.log_dir = log_dir
         self.setup_logging()
         print("VideoFrameExtractor initialized successfully")
         
@@ -26,7 +27,22 @@ class VideoFrameExtractor:
         """Set up logging to both console and file"""
         # Create log filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"frame_extractor_{timestamp}.log"
+        
+        # Use provided log directory or try to detect workflow directory
+        if self.log_dir:
+            logs_dir = Path(self.log_dir) / "logs"
+        else:
+            # Try to get workflow base output directory
+            try:
+                from workflow_utils import WorkflowConfig
+                config = WorkflowConfig()
+                logs_dir = config.base_output_dir / "logs"
+            except:
+                # Fallback to relative path
+                logs_dir = Path("workflow_output") / "logs"
+                
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_filename = logs_dir / f"frame_extractor_{timestamp}.log"
         
         # Create logger
         self.logger = logging.getLogger(f"frame_extractor_{timestamp}")
@@ -49,7 +65,7 @@ class VideoFrameExtractor:
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
         
-        self.logger.info(f"Frame extractor started. Log file: {os.path.abspath(log_filename)}")
+        self.logger.info(f"Frame extractor started. Log file: {log_filename.absolute()}")
         self.logger.info(f"Working directory: {os.getcwd()}")
         
     def load_config(self, config_file: str) -> dict:
@@ -451,6 +467,7 @@ def main():
     parser.add_argument("input", help="Input video file or directory")
     parser.add_argument("-c", "--config", default="video_frame_extractor_config.json",
                        help="Path to config file (default: video_frame_extractor_config.json)")
+    parser.add_argument("--log-dir", help="Directory for log files (default: auto-detect workflow directory)")
     
     # Extraction mode options (mutually exclusive)
     mode_group = parser.add_mutually_exclusive_group()
@@ -461,7 +478,7 @@ def main():
     
     args = parser.parse_args()
     
-    extractor = VideoFrameExtractor(args.config)
+    extractor = VideoFrameExtractor(args.config, log_dir=args.log_dir)
     
     # Override extraction mode based on command line arguments
     if args.time is not None:
