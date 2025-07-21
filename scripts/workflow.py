@@ -124,6 +124,12 @@ class WorkflowOrchestrator:
             self.logger.info(f"Running: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
             
+            # Log the subprocess output for transparency
+            if result.stdout.strip():
+                self.logger.info(f"video_frame_extractor.py output:\n{result.stdout}")
+            if result.stderr.strip():
+                self.logger.warning(f"video_frame_extractor.py stderr:\n{result.stderr}")
+            
             if result.returncode == 0:
                 self.logger.info("Video frame extraction completed successfully")
                 
@@ -176,7 +182,8 @@ class WorkflowOrchestrator:
                 str(input_dir),
                 "--output", str(output_dir),
                 "--recursive",
-                "--quality", str(step_config.get("quality", 95))
+                "--quality", str(step_config.get("quality", 95)),
+                "--log-dir", str(self.config.base_output_dir / "logs")
             ]
             
             if not step_config.get("keep_metadata", True):
@@ -184,6 +191,12 @@ class WorkflowOrchestrator:
             
             self.logger.info(f"Running: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
+            
+            # Log the subprocess output for transparency
+            if result.stdout.strip():
+                self.logger.info(f"ConvertImage.py output:\n{result.stdout}")
+            if result.stderr.strip():
+                self.logger.warning(f"ConvertImage.py stderr:\n{result.stderr}")
             
             if result.returncode == 0:
                 self.logger.info("Image conversion completed successfully")
@@ -290,6 +303,12 @@ class WorkflowOrchestrator:
                 
                 result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
                 
+                # Log the subprocess output for transparency
+                if result.stdout.strip():
+                    self.logger.info(f"image_describer.py output:\n{result.stdout}")
+                if result.stderr.strip():
+                    self.logger.warning(f"image_describer.py stderr:\n{result.stderr}")
+                
                 if result.returncode == 0:
                     self.logger.info(f"Image description completed for {search_dir}")
                     total_processed += len(dir_image_files)
@@ -371,7 +390,8 @@ class WorkflowOrchestrator:
                 sys.executable, "descriptions_to_html.py",
                 str(desc_file),
                 str(html_file),
-                "--title", step_config.get("title", "Image Analysis Report")
+                "--title", step_config.get("title", "Image Analysis Report"),
+                "--log-dir", str(self.config.base_output_dir / "logs")
             ]
             
             if step_config.get("include_details", False):
@@ -379,6 +399,12 @@ class WorkflowOrchestrator:
             
             self.logger.info(f"Running: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
+            
+            # Log the subprocess output for transparency
+            if result.stdout.strip():
+                self.logger.info(f"descriptions_to_html.py output:\n{result.stdout}")
+            if result.stderr.strip():
+                self.logger.warning(f"descriptions_to_html.py stderr:\n{result.stderr}")
             
             if result.returncode == 0:
                 self.logger.info("HTML generation completed successfully")

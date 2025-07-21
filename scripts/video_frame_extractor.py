@@ -19,19 +19,21 @@ class VideoFrameExtractor:
     def __init__(self, config_file: str = "video_frame_extractor_config.json", log_dir: str = None):
         self.supported_formats = {'.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
         self.config_file = config_file  # Store for logging
-        self.config = self.load_config(config_file)
         self.log_dir = log_dir
-        self.setup_logging()
+        self.setup_logging()  # Set up logging first
+        self.config = self.load_config(config_file)  # Now we can use logger in load_config
         self.logger.info("VideoFrameExtractor initialized successfully")
         self.logger.info(f"Supported video formats: {', '.join(sorted(self.supported_formats))}")
         self.logger.info(f"Extraction mode: {self.config.get('extraction_mode', 'unknown')}")
         
         # Initialize processing statistics
-        self.stats = {
+        self.statistics = {
             "total_videos_found": 0,
             "total_videos_processed": 0,
             "total_videos_skipped": 0,
             "total_frames_extracted": 0,
+            "frames_saved": 0,
+            "videos_processed": 0,
             "start_time": None,
             "end_time": None,
             "errors": []
@@ -387,7 +389,7 @@ class VideoFrameExtractor:
                 self.logger.info(f"Skipping video: Output directory not empty")
                 self.logger.info(f"Found {len(existing_files)} existing files in: {os.path.abspath(output_subdir)}")
                 self.logger.debug(f"First few files: {existing_files[:5]}")
-                self.stats["total_videos_skipped"] += 1
+                self.statistics["total_videos_skipped"] += 1
                 return []
         
         # Extract frames based on mode
@@ -399,12 +401,12 @@ class VideoFrameExtractor:
             else:
                 error_msg = f"Unknown extraction mode '{self.config['extraction_mode']}'"
                 self.logger.error(error_msg)
-                self.stats["errors"].append(f"{video_name}: {error_msg}")
+                self.statistics["errors"].append(f"{video_name}: {error_msg}")
                 return []
         except Exception as e:
             error_msg = f"Error processing video {video_name}: {str(e)}"
             self.logger.error(error_msg)
-            self.stats["errors"].append(error_msg)
+            self.statistics["errors"].append(error_msg)
             return []
         
         # Calculate processing time and log summary
@@ -416,8 +418,8 @@ class VideoFrameExtractor:
             self.logger.info(f"Processing time: {processing_time:.2f} seconds")
             self.logger.info(f"First frame: {os.path.basename(extracted_files[0])}")
             self.logger.info(f"Last frame: {os.path.basename(extracted_files[-1])}")
-            self.stats["total_frames_extracted"] += len(extracted_files)
-            self.stats["total_videos_processed"] += 1
+            self.statistics["total_frames_extracted"] += len(extracted_files)
+            self.statistics["total_videos_processed"] += 1
         else:
             self.logger.warning(f"No frames extracted from {video_name}")
         
