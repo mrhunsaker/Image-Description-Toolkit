@@ -1,18 +1,8 @@
-# HBConvert - Video Processing Tools
+# Video Frame Extractor
 
-A collection of tools for video processing: HandBrake batch conversion and intelligent frame extraction.
-
-## Tools Included
-
-### 1. HandBrake Batch Converter (`convert_mkv_to_mp4.bat`)
-Batch convert MKV files to MP4 using HandBrake CLI while preserving all audio, video, and subtitle tracks.
-
-### 2. Video Frame Extractor (`video_frame_extractor.py`)
 A Python tool for extracting frames from video files with configurable options including intelligent scene change detection.
 
-## Video Frame Extractor
-
-### Features
+## Features
 
 - **Two Extraction Modes:**
   - **Time Interval**: Extract frames at regular intervals (e.g., every 5 seconds)
@@ -55,7 +45,7 @@ python video_frame_extractor.py video.mp4
 
 Process all videos in a directory recursively:
 ```bash
-python video_frame_extractor.py "C:\Videos"
+python video_frame_extractor.py "/path/to/videos"
 ```
 
 #### Command Line Options
@@ -63,18 +53,18 @@ python video_frame_extractor.py "C:\Videos"
 **Time Interval Override:**
 ```bash
 # Extract every 2 seconds (overrides config)
-python video_frame_extractor.py --time 2.0 "C:\Videos"
+python video_frame_extractor.py --time 2.0 "/path/to/videos"
 ```
 
 **Scene Change Override:**
 ```bash
 # Use scene detection with 25% threshold (overrides config)
-python video_frame_extractor.py --scene 25.0 "C:\Videos"
+python video_frame_extractor.py --scene 25.0 "/path/to/videos"
 ```
 
 **Custom Config File:**
 ```bash
-python video_frame_extractor.py "C:\Videos" -c my_config.json
+python video_frame_extractor.py "/path/to/videos" -c my_config.json
 ```
 
 ### Configuration
@@ -226,7 +216,7 @@ extracted_frames/
 python video_frame_extractor.py movie.mp4 --time 2
 
 # Use scene detection with 15% threshold on entire directory
-python video_frame_extractor.py C:\Videos --scene 15
+python video_frame_extractor.py /path/to/videos --scene 15
 
 # Extract frames every 30 seconds with custom config
 python video_frame_extractor.py videos/ -c thumbnails.json --time 30
@@ -235,63 +225,10 @@ python video_frame_extractor.py videos/ -c thumbnails.json --time 30
 python video_frame_extractor.py documentary.mkv --scene 10
 
 # Quick thumbnail extraction (every 60 seconds)
-python video_frame_extractor.py C:\Movies --time 60
+python video_frame_extractor.py /path/to/movies --time 60
 ```
-```
-
-## HandBrake Batch Converter
-
-### Features
-- **Batch Processing**: Convert all MKV files in a directory and subdirectories
-- **Format Preservation**: Keeps all audio tracks, video streams, and subtitle tracks intact
-- **Multiple Presets**: Choose from Fast 1080p30, High Profile, or Universal presets
-- **Progress Logging**: Detailed conversion logs with timestamps
-- **Error Handling**: Continues processing even if individual files fail
-
-### Prerequisites
-- HandBrake CLI (`HandBrakeCLI.exe`) must be installed and in your system PATH
-- Download from: https://handbrake.fr/downloads.php
-
-### Usage
-
-1. **Run the batch file:**
-   ```cmd
-   convert_mkv_to_mp4.bat
-   ```
-
-2. **Follow the prompts:**
-   - Enter the directory path containing MKV files
-   - Choose conversion preset (1=Fast, 2=High Profile, 3=Universal)
-   - Conversion will begin automatically
-
-3. **Monitor progress:**
-   - Real-time progress shown in console
-   - Detailed logs saved to `handbrake_conversion_log.txt`
-
-### Example Output Structure
-```
-Original: C:\Videos\movie.mkv
-Converted: C:\Videos\movie.mp4
-```
-
-## Combined Workflow
-
-You can use both tools together for a complete video processing workflow:
-
-1. **Convert videos**: Use HandBrake batch converter to convert MKV → MP4
-2. **Extract frames**: Use the frame extractor to create thumbnails or analyze content
 
 ## Troubleshooting
-
-### HandBrake Issues
-
-**Error: "HandBrakeCLI is not recognized"**
-- Install HandBrake CLI and add to system PATH
-- Or place `HandBrakeCLI.exe` in the same directory as the batch file
-
-**Error: "Access denied" or file locked**
-- Close any media players that might have the video files open
-- Run command prompt as administrator
 
 ### Frame Extractor Issues
 

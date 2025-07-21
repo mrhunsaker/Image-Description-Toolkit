@@ -256,4 +256,4 @@ The workflow system is ready for use:
 - ✅ Comprehensive documentation and testing
 - ✅ Ready for production use
 
-Users can continue using individual scripts exactly as before, or take advantage of the new automated workfC:/Users/kelly/GitHub/IDK/Image-Description-Toolkit/.venv/Scripts/python.exe test_workflow.py    low system for streamlined processing.
+Users can continue using individual scripts exactly as before, or take advantage of the new automated workflow system for streamlined processing.
