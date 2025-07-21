@@ -360,7 +360,7 @@ class ImageDescriber:
             gc.collect()
             return None
     
-    def write_description_to_file(self, image_path: Path, description: str, output_file: Path, metadata: Dict[str, Any] = None) -> bool:
+    def write_description_to_file(self, image_path: Path, description: str, output_file: Path, metadata: Dict[str, Any] = None, base_directory: Path = None) -> bool:
         """
         Write description to a text file
         
@@ -369,6 +369,7 @@ class ImageDescriber:
             description: Description to write
             output_file: Path to the output text file
             metadata: Optional metadata dictionary to include
+            base_directory: Base directory for calculating relative paths
             
         Returns:
             True if successful, False otherwise
@@ -378,8 +379,16 @@ class ImageDescriber:
             output_format = self.config.get('output_format', {})
             separator_char = output_format.get('separator', '-')
             
-            # Format the entry
-            entry = f"File: {image_path.name}\n"
+            # Calculate relative path if base directory is provided
+            if base_directory:
+                try:
+                    relative_path = image_path.relative_to(base_directory)
+                    entry = f"File: {relative_path}\n"
+                except ValueError:
+                    # Fallback if relative path calculation fails
+                    entry = f"File: {image_path.name}\n"
+            else:
+                entry = f"File: {image_path.name}\n"
             
             if output_format.get('include_file_path', True):
                 entry += f"Path: {image_path}\n"
@@ -510,10 +519,15 @@ class ImageDescriber:
             logger.info(f"Processing duration: {processing_duration:.2f} seconds")
             
             if description:
-                # Write description to file with metadata
-                if self.write_description_to_file(image_path, description, output_file, metadata):
+                # Write description to file with metadata and base directory for relative paths
+                if self.write_description_to_file(image_path, description, output_file, metadata, directory_path):
                     success_count += 1
-                    logger.info(f"Successfully processed: {image_path.name}")
+                    # Log with relative path for better readability
+                    try:
+                        relative_path = image_path.relative_to(directory_path)
+                        logger.info(f"Successfully processed: {relative_path}")
+                    except ValueError:
+                        logger.info(f"Successfully processed: {image_path.name}")
                 else:
                     logger.error(f"Failed to write description for: {image_path.name}")
             else:

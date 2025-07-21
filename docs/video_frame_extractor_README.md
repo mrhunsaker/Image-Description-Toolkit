@@ -69,7 +69,23 @@ python video_frame_extractor.py "/path/to/videos" -c my_config.json
 
 ### Configuration
 
-The tool uses a JSON configuration file (`frame_extractor_config.json`) that will be automatically created on first run. You can customize all extraction behavior by editing this file.
+The tool uses a JSON configuration file for all extraction settings. By default, it looks for `video_frame_extractor_config.json` in the scripts directory, which contains sensible defaults. You can also specify a custom config file path.
+
+#### Getting Started with Configuration
+
+**Use the default config (recommended):**
+```bash
+python video_frame_extractor.py video.mp4
+```
+
+**Create a custom config file:**
+```bash
+# Create a default config file in current directory for customization
+python video_frame_extractor.py --create-config
+
+# Then use your custom config
+python video_frame_extractor.py video.mp4 -c video_frame_extractor_config.json
+```
 
 #### Configuration Options
 

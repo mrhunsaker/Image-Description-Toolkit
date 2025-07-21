@@ -92,24 +92,35 @@ class VideoFrameExtractor:
     def load_config(self, config_file: str) -> dict:
         """Load configuration from JSON file"""
         try:
-            with open(config_file, 'r') as f:
+            config_path = Path(config_file)
+            if not config_path.is_absolute():
+                # Look for config file in script directory first
+                script_dir = Path(__file__).parent
+                config_path = script_dir / config_file
+            
+            if not config_path.exists():
+                self.logger.warning(f"Config file not found: {config_path}")
+                return self.get_default_config()
+                
+            with open(config_path, 'r') as f:
                 content = f.read().strip()
                 if not content:
-                    self.logger.info(f"Config file {config_file} is empty. Creating default config.")
-                    return self.create_default_config(config_file)
+                    self.logger.info(f"Config file {config_path} is empty. Using default config.")
+                    return self.get_default_config()
                 config = json.loads(content)
-                self.logger.info(f"Configuration loaded from: {os.path.abspath(config_file)}")
+                self.logger.info(f"Configuration loaded from: {config_path}")
                 return config
-        except FileNotFoundError:
-            self.logger.info(f"Config file {config_file} not found. Creating default config.")
-            return self.create_default_config(config_file)
         except json.JSONDecodeError as e:
             self.logger.error(f"Error parsing config file {config_file}: {e}")
-            self.logger.info("Creating default config.")
-            return self.create_default_config(config_file)
+            self.logger.info("Using default config.")
+            return self.get_default_config()
+        except Exception as e:
+            self.logger.error(f"Error loading config file {config_file}: {e}")
+            self.logger.info("Using default config.")
+            return self.get_default_config()
     
-    def create_default_config(self, config_file: str) -> dict:
-        """Create a default configuration file and return the config"""
+    def get_default_config(self) -> dict:
+        """Get the default configuration without creating a file"""
         
         # Use workflow output directory by default
         default_output_dir = "extracted_frames"
@@ -139,6 +150,14 @@ class VideoFrameExtractor:
             "skip_existing": False,
             "log_progress": True
         }
+        
+        self.logger.info("Using default configuration settings.")
+        return default_config
+    
+    def create_default_config_file(self, config_file: str) -> dict:
+        """Create a default configuration file and return the config (for manual config file creation)"""
+        
+        default_config = self.get_default_config()
         
         try:
             with open(config_file, 'w') as f:
@@ -585,10 +604,12 @@ class VideoFrameExtractor:
 
 def main():
     parser = argparse.ArgumentParser(description="Extract frames from video files")
-    parser.add_argument("input", help="Input video file or directory")
+    parser.add_argument("input", nargs='?', help="Input video file or directory")
     parser.add_argument("-c", "--config", default="video_frame_extractor_config.json",
                        help="Path to config file (default: video_frame_extractor_config.json)")
     parser.add_argument("--log-dir", help="Directory for log files (default: auto-detect workflow directory)")
+    parser.add_argument("--create-config", action="store_true",
+                       help="Create a default config file and exit")
     
     # Extraction mode options (mutually exclusive)
     mode_group = parser.add_mutually_exclusive_group()
@@ -598,6 +619,17 @@ def main():
                            help="Use scene change detection mode with specified threshold percentage (overrides config)")
     
     args = parser.parse_args()
+    
+    # Handle config file creation
+    if args.create_config:
+        extractor = VideoFrameExtractor(args.config, log_dir=args.log_dir)
+        extractor.create_default_config_file(args.config)
+        print(f"Default config file created: {args.config}")
+        return
+    
+    # Require input for normal operation
+    if not args.input:
+        parser.error("Input file or directory is required unless using --create-config")
     
     extractor = VideoFrameExtractor(args.config, log_dir=args.log_dir)
     
