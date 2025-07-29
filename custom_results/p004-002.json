@@ -1,0 +1,22 @@
+{
+  "file_path": "poet_Image_Description_Toolkit/custom_results/test/p004-002.jpg",
+  "prompt_styles": [
+    {
+      "style": "Objective",
+      "models": [
+        {
+          "model": "bakllava",
+          "description": "Here's a descriptive analysis of the image, focusing on objective details:\n\n**Overall Description:**\n\nThe image is a black and white line drawing on a white background. It depicts multiple stick figures arranged in a linear fashion across the page.\n\n**Objects and Relationships:**\n\n*   **Stick Figures:** There are nine stick figures drawn in a horizontal line. Each figure is a simple representation of a human form, consisting of a head, torso, and limbs.\n*   **Arrangement:** The figures are positioned one after another in a single line. They are spaced relatively evenly apart.\n\n**Spatial Layout and Positioning:**\n\n*   **Linearity:** The figures are arranged in a straight line, extending horizontally across the page.\n*   **Size:** All figures are approximately the same size.\n*   **Page Boundaries:** The line of figures extends nearly to the right edge of the page.\n\n**Colors and Lighting:**\n\n*   **Monochromatic:** The image is entirely black and white.\n*   **No Lighting Effects:** There are no shading or highlights to indicate light sources or shadows.\n\n**Text or Symbols:**\n\n*   **None:** The image contains no text or other symbols.\n\n**Important Note:** This description focuses solely on the visual elements of the image. It avoids any interpretation or speculation about the image's meaning or purpose."
+        },
+        {
+          "model": "llava",
+          "description": "The image appears to be a digital graphic with an educational theme related to statistics or data analysis. It features two main sections: on the left side is a vertical bar chart displaying numerical values that increase from top to bottom; and on the right side are silhouettes of human figures arranged in rows, each row representing one student as indicated by text at the bottom stating \"each represent 1 stu.\"\n\nThe title or heading above the bar chart reads \"represents,\" suggesting a comparison between different groups. The numerical values range from zero to five and seem to be related to some form of measurement or count for students, with each subsequent value representing more individuals than the previous one.\n\nAt the bottom right corner, there is additional text that says \"1 stu.\" This reinforces the visual representation above it by indicating a scale factor: 1 student corresponds to this particular bar chart element. The style of the image suggests an educational or instructional purpose, possibly used in teaching statistics or data presentation methods.\n\nThe color scheme consists mainly of shades of gray and black for both the silhouettes and the numerical values on the left side. There is no visible text within the human figure silhouette area that would provide additional context about their roles or actions. The lighting appears to be even, with no shadows cast by the figures due to a lack of light sources in this image."
+        },
+        {
+          "model": "moondream",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}

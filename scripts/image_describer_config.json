@@ -16,13 +16,17 @@
     "Narrative": "Provide a narrative description including objects, colors and detail. Avoid interpretation, just describe.",
     "artistic": "Analyze this image from an artistic perspective, describing:\n- Visual composition and framing\n- Color palette and lighting mood\n- Artistic style or technique\n- Emotional tone or atmosphere\n- Subject matter and symbolism",
     "technical": "Provide a technical analysis of this image:\n- Camera settings and photographic technique\n- Lighting conditions and quality\n- Composition and framing\n- Image quality and clarity\n- Technical strengths or weaknesses",
-    "colorful": "Give me a rich, vivid description emphasizing colors, lighting, and visual atmosphere. Focus on the palette, color relationships, and how colors contribute to the mood and composition."
+    "colorful": "Give me a rich, vivid description emphasizing colors, lighting, and visual atmosphere. Focus on the palette, color relationships, and how colors contribute to the mood and composition.",
+    "poet_basic": "Describe the image in a way that is objective, clear, and useful for someone who cannot see it. Focus on:\n- Main objects and their relationships\n- Spatial layout and positioning\n- Key colors and lighting\n- Text or symbols present\n- Avoid interpretation, emotion, or speculation.",
+    "poet_extended": "Provide a comprehensive, objective description following POET guidelines:\n- List all significant objects, people, and text\n- Describe spatial relationships and arrangement\n- Note colors, lighting, and visual style\n- Include any visible actions or interactions\n- Avoid personal opinions, emotional tone, or artistic interpretation.",
+    "poet_contextual": "Describe the image with context for accessibility:\n- Identify main elements and their arrangement\n- Mention any visible text, labels, or symbols\n- Note colors, lighting, and style\n- If relevant, describe the setting or environment\n- Do not interpret, speculate, or add emotion.",
+    "poet_structured": "Produce a structured description for accessibility:\n1. Overview of the image\n2. List of main objects and their positions\n3. Description of colors and lighting\n4. Any visible text or symbols\n5. Notable actions or interactions\nAvoid interpretation and keep language factual."
   },
   "output_format": {
-    "include_timestamp": false,
+    "include_timestamp": true,
     "include_model_info": true,
-    "include_file_path": false,
-    "include_metadata": false,
+    "include_file_path": true,
+    "include_metadata": true,
     "separator": "-"
   },
   "available_models": {
@@ -44,28 +48,22 @@
       "requirements": "ollama pull llava",
       "recommended": false
     },
-    "llava:7b": {
-      "description": "LLaVA 7B model - faster processing, lower memory usage",
-      "size": "7B parameters",
-      "requirements": "ollama pull llava:7b",
-      "recommended": false
-    },
-    "llava:13b": {
-      "description": "LLaVA 13B model - higher quality, more memory usage",
-      "size": "13B parameters",
-      "requirements": "ollama pull llava:13b",
-      "recommended": false
-    },
-    "llava:34b": {
-      "description": "LLaVA 34B model - highest quality, requires significant memory",
-      "size": "34B parameters",
-      "requirements": "ollama pull llava:34b",
-      "recommended": false
-    },
     "bakllava": {
       "description": "BakLLaVA model - alternative vision model",
       "size": "7B parameters",
       "requirements": "ollama pull bakllava",
+      "recommended": false
+    },
+    "granite3-vision": {
+      "description": "Granite 3 Vision model - high quality, suitable for accessibility-focused image description",
+      "size": "unknown",
+      "requirements": "ollama pull granite3-vision",
+      "recommended": false
+    },
+    "gemma3": {
+      "description": "Gemma 3 Vision model - Google’s latest multimodal vision model",
+      "size": "unknown",
+      "requirements": "ollama pull gemma3",
       "recommended": false
     }
   },
@@ -74,14 +72,7 @@
     "default_batch_delay": 2.0,
     "default_compression": true,
     "extract_metadata": true,
-    "supported_formats": [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".bmp",
-      ".tiff",
-      ".webp"
-    ]
+    "supported_formats": [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
   },
   "documentation": {
     "overview": "This configuration file controls all aspects of the image description process.",
