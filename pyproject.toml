@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "poet-image-description-toolkit"
+version = "2025.0.1-beta"
+description = "AI-powered toolkit for image and video description, conversion, and reporting using Ollama vision models."
+authors = ["Michael Ryan Hunsaker, M.Ed. Ph.D. <hunsakerconsulting@gmail.com>"]
+license = "Apache 2,0"
+readme = "README.md"
+homepage = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+repository = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+keywords = [
+    "AI",
+    "image",
+    "video",
+    "description",
+    "Ollama",
+    "workflow",
+    "conversion",
+    "reporting",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.12 <4.0"
+ollama = ">=0.3.0"
+Pillow = ">=10.0.0"
+pillow-heif = ">=0.13.0"
+opencv-python = ">=4.8.0"
+numpy = ">=1.24.0"
+requests = ">=2.31.0"
+tqdm = ">=4.60.0"
+
+# Compatibility for older Python versions
+typing-extensions = { version = ">=4.0.0", markers = "python_version < '3.8'" }
+pathlib2 = { version = ">=2.3.5", markers = "python_version < '3.4'" }
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=6.0.0"
+pytest-mock = ">=3.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.5.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pdm]
+[tool.pdm.dev-dependencies]
+pytest = ">=6.0.0"
+pytest-mock = ">=3.6.0"
+
+[tool.pdm.dependencies]
+python = ">=3.12 <4.0"
+ollama = ">=0.3.0"
+Pillow = ">=10.0.0"
+pillow-heif = ">=0.13.0"
+opencv-python = ">=4.8.0"
+numpy = ">=1.24.0"
+requests = ">=2.31.0"
+tqdm = ">=4.60.0"
+typing-extensions = { version = ">=4.0.0", markers = "python_version < '3.8'" }
+pathlib2 = { version = ">=2.3.5", markers = "python_version < '3.4'" }
+
+[project]
+name = "poet-image-description-toolkit"
+version = "2025.0.1-beta"
+description = "AI-powered toolkit for image and video description, conversion, and reporting using Ollama vision models."
+authors = [
+    { name = "Michael Ryan Hunsaker, M.Ed., Ph.D.", email = "hunsakerconsulting@gmail.com" },
+]
+license = { text = "Apache2.0" }
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = [
+    "AI",
+    "image",
+    "video",
+    "description",
+    "Ollama",
+    "workflow",
+    "conversion",
+    "reporting",
+]
+homepage = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+repository = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+
+[project.optional-dependencies]
+dev = ["pytest>=6.0.0", "pytest-mock>=3.6.0"]
+
+[project.urls]
+"Homepage" = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+"Repository" = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit"
+"Documentation" = "https://github.com/mrhunsaker/Poet-Image-Description-Toolkit/tree/main/docs"

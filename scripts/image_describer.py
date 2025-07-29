@@ -44,11 +44,22 @@ logger = logging.getLogger(__name__)
 
 def setup_logging(log_dir: Optional[str] = None, verbose: bool = False) -> None:
     """
-    Set up logging configuration for the image describer
+    Set up logging configuration for the image describer.
 
-    Args:
-        log_dir: Directory to write log files to
-        verbose: Whether to enable debug logging
+    Parameters
+    ----------
+    log_dir : str or None, optional
+        Directory to write log files to. If None, only console logging is used.
+    verbose : bool, optional
+        If True, enables debug logging. Otherwise, info level.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Configures both console and file logging if log_dir is provided.
     """
     global logger
 
@@ -234,7 +245,19 @@ class ImageDescriber:
         return settings
 
     def is_supported_image(self, file_path: Path) -> bool:
-        """Check if the file is a supported image format"""
+        """
+        Check if the file is a supported image format.
+
+        Parameters
+        ----------
+        file_path : Path
+            Path to the image file.
+
+        Returns
+        -------
+        bool
+            True if supported, False otherwise.
+        """
         return file_path.suffix.lower() in self.supported_formats
 
     def optimize_image(self, image_path: Path) -> Optional[bytes]:
@@ -967,6 +990,11 @@ Configuration:
         help=f"Style of prompt to use. Available: {', '.join(available_styles)} (default: {default_style})"
     )
     parser.add_argument(
+        "--poet",
+        action="store_true",
+        help="Generate all poet prompt styles (poet_basic, poet_structured, poet_extended, poet_contextual) and output as a single JSON file with image metadata"
+    )
+    parser.add_argument(
         "--no-metadata",
         action="store_true",
         help="Disable metadata extraction from image files"
@@ -994,6 +1022,33 @@ Configuration:
     # Override metadata extraction if disabled via command line
     if args.no_metadata:
         describer.config['processing_options']['extract_metadata'] = False
+
+    # Poet mode: generate all poet prompt styles and output as JSON
+    if args.poet:
+        poet_styles = ["poet_basic", "poet_structured", "poet_extended", "poet_contextual"]
+        output_dir = Path(args.output_dir) if args.output_dir else Path("workflow_output/descriptions/")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        image_files = [f for f in directory_path.iterdir() if describer.is_supported_image(f)]
+        for img_path in image_files:
+            metadata = describer.extract_metadata(img_path) if describer.config['processing_options'].get('extract_metadata', True) else {}
+            poet_descriptions = []
+            for style in poet_styles:
+                describer.prompt_style = style
+                desc = describer.get_image_description(img_path)
+                poet_descriptions.append({
+                    "style": style,
+                    "description": desc
+                })
+            out_json = {
+                "file_path": str(img_path.resolve()),
+                "metadata": metadata,
+                "poet_descriptions": poet_descriptions
+            }
+            out_file = output_dir / f"{img_path.stem}_poet.json"
+            with open(out_file, "w", encoding="utf-8") as jf:
+                json.dump(out_json, jf, indent=2)
+            print(f"Poet descriptions written to {out_file}")
+        sys.exit(0)
         describer.config['output_format']['include_metadata'] = False
 
     # Check if Ollama is available

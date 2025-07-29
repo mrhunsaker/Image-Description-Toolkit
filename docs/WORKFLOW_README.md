@@ -16,25 +16,27 @@ python workflow.py media_folder --output-dir results
 python workflow.py photos --steps describe,html
 ```
 
-### Individual Scripts (Still Work Unchanged)
+### Individual Scripts (Now Use Workflow Output Structure by Default)
 ```bash
-# All existing scripts work exactly as before
-python image_describer.py photos
-python video_frame_extractor.py videos
-python ConvertImage.py heic_photos
-python descriptions_to_html.py image_descriptions.txt
+# All scripts now output to organized workflow directories by default
+python image_describer.py photos         # → workflow_output/descriptions/image_descriptions.txt
+python video_frame_extractor.py videos   # → workflow_output/extracted_frames/
+python ConvertImage.py heic_photos       # → workflow_output/converted_images/
+python descriptions_to_html.py image_descriptions.txt # → workflow_output/html_reports/image_descriptions.html
 ```
 
-## 📋 Workflow Steps
+## 🗃️ Workflow Steps
 
-The workflow system supports four main steps that can be run individually or in combination:
+The workflow system supports four main steps that can be run individually or in any combination:
 
-| Step | Description | Input | Output |
-|------|-------------|-------|--------|
-| **video** | Extract frames from videos | Video files | JPG frames |
-| **convert** | Convert HEIC to JPG | HEIC/HEIF files | JPG files |
-| **describe** | AI-powered image descriptions | Image files | Text descriptions |
-| **html** | Generate HTML reports | Description files | HTML reports |
+| Step      | Description                      | Input           | Output                  |
+|-----------|----------------------------------|-----------------|-------------------------|
+| **video** | Extract frames from videos       | Video files     | JPG frames              |
+| **convert** | Convert HEIC/HEIF to JPG       | HEIC/HEIF files | JPG files               |
+| **describe** | AI-powered image descriptions | Image files     | Text descriptions       |
+| **html** | Generate HTML reports             | Description files | HTML reports           |
+
+All outputs are organized in the `workflow_output/` directory by default.
 
 ## 🗂️ Directory Structure
 
@@ -84,9 +86,11 @@ workflow_output/
 }
 ```
 
-### Individual Script Configs (Unchanged)
-- `image_describer_config.json` - Image description settings
+### Individual Script Configs
+- `image_describer_config.json` - Image description settings (see CONFIGURATION.md)
 - `video_frame_extractor_config.json` - Video extraction settings
+
+All scripts now use the workflow output structure by default. No legacy flags or config options are required.
 
 ## 📖 Usage Examples
 
@@ -124,6 +128,15 @@ python workflow.py media --verbose
 
 # Dry run (show what would be done)
 python workflow.py media --dry-run
+```
+
+### Individual Script Usage (Now Always Uses Workflow Output Structure)
+```bash
+python image_describer.py photos
+python video_frame_extractor.py videos
+python ConvertImage.py heic_photos
+python descriptions_to_html.py image_descriptions.txt
+# All outputs go to workflow_output/ subdirectories by default.
 ```
 
 ## 🔧 Backward Compatibility
@@ -221,6 +234,7 @@ python video_frame_extractor.py test_video.mp4
 python ConvertImage.py test_image.heic
 python image_describer.py test_photos/
 python descriptions_to_html.py image_descriptions.txt
+# All outputs will be in workflow_output/ subdirectories.
 ```
 
 ## 🔄 Migration from Individual Scripts
@@ -243,7 +257,7 @@ python workflow.py videos/ --steps video,describe,html
 python workflow.py heic_photos/ --steps convert,describe,html
 ```
 
-## 📁 File Organization
+## 🗂️ File Organization
 
 The workflow system automatically organizes outputs:
 
@@ -251,6 +265,16 @@ The workflow system automatically organizes outputs:
 - **Separates processing steps** into logical directories
 - **Consolidates related outputs** (descriptions, HTML reports)
 - **Maintains traceability** through detailed logging
+
+Example output structure:
+```
+workflow_output/
+├── extracted_frames/
+├── converted_images/
+├── descriptions/
+├── html_reports/
+└── logs/
+```
 
 This makes it easy to:
 - Track processing steps

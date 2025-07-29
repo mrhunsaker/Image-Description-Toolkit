@@ -1,7 +1,7 @@
 # Image Description Toolkit - Complete Dependencies
-# 
+#
 # This file contains all dependencies needed for the complete
-# Image Description Toolkit including workflow system and all individual scripts
+# Image Description Toolkit including workflow system and all individual scripts.
 #
 # Install with: pip install -r requirements.txt
 
@@ -16,6 +16,9 @@ pillow-heif>=0.13.0
 opencv-python>=4.8.0
 numpy>=1.24.0
 
+# HTML generation and parsing (for descriptions_to_html.py)
+# (No extra dependencies required, uses Python standard library)
+
 # Configuration and utilities (compatibility for older Python versions)
 typing-extensions>=4.0.0; python_version<"3.8"
 pathlib2>=2.3.5; python_version<"3.4"
@@ -26,3 +29,11 @@ tqdm>=4.60.0
 # Development and testing (optional)
 pytest>=6.0.0
 pytest-mock>=3.6.0
+
+# Additional utilities for workflow and compatibility
+requests>=2.31.0
+
+# For compatibility with pathlib and typing in older Python
+# (already included above, but ensure coverage for all scripts)
+
+# For packaging and environment management (see pyproject.toml for Poetry/PDM)

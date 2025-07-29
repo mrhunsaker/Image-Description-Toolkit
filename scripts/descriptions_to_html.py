@@ -16,21 +16,21 @@ the complete details section with metadata.
 
 Usage:
     python descriptions_to_html.py [input_file] [output_file]
-    
+
     If no arguments provided, defaults to:
     - input: image_descriptions.txt
     - output: image_descriptions.html
 """
 
 import argparse
-import re
-from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Any, Optional
 import html
-import sys
 import logging
+import re
+import sys
 import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Set UTF-8 encoding for console output on Windows
 if sys.platform.startswith('win'):
@@ -44,152 +44,215 @@ logger = logging.getLogger('descriptions_to_html')
 
 def setup_logging(log_dir: Optional[str] = None, verbose: bool = False) -> None:
     """
-    Set up logging configuration for the HTML converter
-    
-    Args:
-        log_dir: Directory to write log files to
-        verbose: Whether to enable debug logging
+    Set up logging configuration for the HTML converter.
+
+    Parameters
+    ----------
+    log_dir : str, optional
+        Directory to write log files to. If None, only console logging is used.
+    verbose : bool, optional
+        If True, sets logging level to DEBUG. Otherwise, INFO.
+
+    Returns
+    -------
+    None
     """
     global logger
-    
+
     # Clear existing handlers
     logger.handlers.clear()
-    
+
     # Set logging level
     level = logging.DEBUG if verbose else logging.INFO
     logger.setLevel(level)
-    
+
     # Create formatter
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
+
     # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-    
+
     # File handler if log_dir is provided
     if log_dir:
-        log_path = Path(log_dir)
-        log_path.mkdir(parents=True, exist_ok=True)
-        
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        log_filename = log_path / f"descriptions_to_html_{timestamp}.log"
-        
+        log_dir = Path(log_dir)
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = log_dir / f"descriptions_to_html_{timestamp}.log"
+
         file_handler = logging.FileHandler(log_filename, encoding='utf-8')
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-        
+
+        logger.info(f"Descriptions to HTML log file: {log_filename.absolute()}")
         logger.info(f"HTML converter log file: {log_filename.absolute()}")
 
 
 class DescriptionEntry:
-    """Class to represent a single image description entry"""
-    
-    def __init__(self):
-        self.filename = ""
-        self.filepath = ""
-        self.photo_date = ""
-        self.location = ""
-        self.camera = ""
-        self.settings = ""
-        self.model = ""
-        self.prompt_style = ""
-        self.description = ""
-        self.timestamp = ""
-        self.raw_metadata = {}
-    
+    """
+    Class to represent a single image description entry.
+
+    Attributes
+    ----------
+    filename : str
+        Name of the image file.
+    filepath : str
+        Path to the image file.
+    photo_date : str
+        Date the photo was taken.
+    location : str
+        Location metadata (GPS, etc.).
+    camera : str
+        Camera information.
+    settings : str
+        Technical camera settings.
+    model : str
+        AI model used for description.
+    prompt_style : str
+        Prompt style used for description.
+    description : str
+        AI-generated description.
+    raw_metadata : dict
+        Raw metadata extracted from image.
+    """
+
+    def __init__(self) -> None:
+        self.filename: str = ""
+        self.filepath: str = ""
+        self.photo_date: str = ""
+        self.location: str = ""
+        self.camera: str = ""
+        self.settings: str = ""
+        self.model: str = ""
+        self.prompt_style: str = ""
+        self.description: str = ""
+        self.raw_metadata: dict = {}
+
     def to_html(self, include_details: bool = False) -> str:
-        """Convert the entry to HTML format
-        
+        """
+        Convert the entry to HTML format.
+
+        Parameters
+        ----------
+        include_details : bool, optional
+            If True, includes full metadata details in the HTML output.
+
+        Returns
+        -------
+        str
+            HTML string representing the image description entry.
+        """
+
         Args:
             include_details: Whether to include the details section with metadata
         """
         html_content = []
-        
+
         # Photo name as H2
         html_content.append(f'<h2>{html.escape(self.filename)}</h2>')
-        
+
         # Details section as H3 (only if include_details is True)
         if include_details:
             html_content.append('<h3>Details</h3>')
             html_content.append('<ul>')
-            
+
             # Add metadata items to list
             if self.filepath:
                 html_content.append(f'<li><strong>File Path:</strong> {html.escape(self.filepath)}</li>')
-            
+
             if self.photo_date:
                 html_content.append(f'<li><strong>Photo Date:</strong> {html.escape(self.photo_date)}</li>')
-            
+
             if self.location:
                 html_content.append(f'<li><strong>Location:</strong> {html.escape(self.location)}</li>')
-            
+
             if self.camera:
                 html_content.append(f'<li><strong>Camera:</strong> {html.escape(self.camera)}</li>')
-            
+
             if self.settings:
                 html_content.append(f'<li><strong>Settings:</strong> {html.escape(self.settings)}</li>')
-            
+
             if self.model:
                 html_content.append(f'<li><strong>Model:</strong> {html.escape(self.model)}</li>')
-            
+
             if self.prompt_style:
                 html_content.append(f'<li><strong>Prompt Style:</strong> {html.escape(self.prompt_style)}</li>')
-            
+
             if self.timestamp:
                 html_content.append(f'<li><strong>Generated:</strong> {html.escape(self.timestamp)}</li>')
-            
+
             html_content.append('</ul>')
-        
+
         # Description as H4
         html_content.append('<h4>Description</h4>')
-        
+
         if self.description:
             # Convert line breaks to HTML and escape content
             description_html = html.escape(self.description).replace('\n', '<br>\n')
             html_content.append(f'<p>{description_html}</p>')
         else:
             html_content.append('<p><em>No description available</em></p>')
-        
+
         return '\n'.join(html_content)
 
 
 class DescriptionsParser:
     """Parser for image descriptions text file"""
-    
-    def __init__(self, input_file: Path):
+
+    def __init__(self, input_file: Path) -> None:
+        """
+        Initialize the DescriptionsParser.
+
+        Parameters
+        ----------
+        input_file : Path
+            Path to the input text file containing image descriptions.
+
+        Returns
+        -------
+        None
+        """
         self.input_file = input_file
         self.entries: List[DescriptionEntry] = []
-    
+
     def parse(self) -> List[DescriptionEntry]:
-        """Parse the descriptions file and return a list of entries"""
+        """
+        Parse the descriptions file and return a list of entries.
+
+        Returns
+        -------
+        List[DescriptionEntry]
+            List of parsed DescriptionEntry objects.
+        """
         try:
             with open(self.input_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             # Split by separator lines (80 dashes)
             sections = re.split(r'-{80,}', content)
-            
+
             for section in sections:
                 section = section.strip()
                 if not section:
                     continue
-                
+
                 # Check if this section contains the header
                 if section.startswith('Image Descriptions') or section.startswith('='):
                     # This section might contain both header and first entry
                     # Look for the actual entry part after the header
                     lines = section.split('\n')
                     entry_start = -1
-                    
+
                     # Find where the entry starts (look for "File:" line)
                     for i, line in enumerate(lines):
                         if line.strip().startswith('File:'):
                             entry_start = i
                             break
-                    
+
                     if entry_start != -1:
                         # Extract just the entry part
                         entry_lines = lines[entry_start:]
@@ -198,31 +261,43 @@ class DescriptionsParser:
                         if entry and entry.filename:
                             self.entries.append(entry)
                     continue
-                
+
                 # Regular entry section
                 entry = self._parse_section(section)
                 if entry and entry.filename:
                     self.entries.append(entry)
-            
+
             return self.entries
-            
+
         except Exception as e:
             logger.error(f"Error parsing file: {e}")
             return []
-    
+
     def _parse_section(self, section: str) -> Optional[DescriptionEntry]:
-        """Parse a single section into a DescriptionEntry"""
+        """
+        Parse a single section into a DescriptionEntry.
+
+        Parameters
+        ----------
+        section : str
+            Section of text representing one image description.
+
+        Returns
+        -------
+        Optional[DescriptionEntry]
+            Parsed DescriptionEntry object, or None if parsing fails.
+        """
         entry = DescriptionEntry()
         lines = section.split('\n')
-        
+
         description_started = False
         description_lines = []
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # Check if we've reached the description
             if line.startswith('Description:'):
                 description_started = True
@@ -230,7 +305,7 @@ class DescriptionsParser:
                 if desc_text:
                     description_lines.append(desc_text)
                 continue
-            
+
             # If we're in description mode, collect all remaining lines
             if description_started:
                 if line.startswith('Timestamp:'):
@@ -240,7 +315,7 @@ class DescriptionsParser:
                 else:
                     description_lines.append(line)
                 continue
-            
+
             # Parse metadata fields
             if line.startswith('File:'):
                 entry.filename = line[5:].strip()
@@ -260,59 +335,89 @@ class DescriptionsParser:
                 entry.prompt_style = line[13:].strip()
             elif line.startswith('Timestamp:'):
                 entry.timestamp = line[10:].strip()
-        
+
         # Join description lines
         entry.description = '\n'.join(description_lines).strip()
-        
+
         return entry
 
 
 class HTMLGenerator:
     """Generator for HTML output"""
-    
-    def __init__(self, entries: List[DescriptionEntry], title: str = "Image Descriptions", include_details: bool = False):
+
+    def __init__(self, entries: List[DescriptionEntry], title: str = "Image Descriptions", include_details: bool = False) -> None:
+        """
+        Initialize the HTMLGenerator.
+
+        Parameters
+        ----------
+        entries : List[DescriptionEntry]
+            List of DescriptionEntry objects to include in the HTML.
+        title : str, optional
+            Title for the HTML page.
+        include_details : bool, optional
+            If True, includes full metadata details for each image.
+
+        Returns
+        -------
+        None
+        """
         self.entries = entries
         self.title = title
         self.include_details = include_details
-    
+
     def generate(self) -> str:
-        """Generate complete HTML document"""
+        """
+        Generate complete HTML document.
+
+        Returns
+        -------
+        str
+            HTML string representing the full document.
+        """
         html_parts = []
-        
+
         # HTML header
         html_parts.append(self._generate_header())
-        
+
         # Body content
         html_parts.append('<body>')
         html_parts.append(f'<div class="container">')
         html_parts.append(f'<h1>{html.escape(self.title)}</h1>')
-        
+
         # Generation info
         html_parts.append(f'<p class="generation-info">Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>')
         html_parts.append(f'<p class="stats">Total images: {len(self.entries)}</p>')
-        
+
         # Table of contents
         if len(self.entries) > 5:
             html_parts.append(self._generate_toc())
-        
+
         # Individual entries
         for i, entry in enumerate(self.entries):
             html_parts.append(f'<div class="entry" id="entry-{i}">')
             html_parts.append(entry.to_html(include_details=self.include_details))
             html_parts.append('</div>')
-            
+
             # Add separator between entries
             if i < len(self.entries) - 1:
                 html_parts.append('<hr class="entry-separator">')
-        
+
         html_parts.append('</div>')
         html_parts.append('</body>')
         html_parts.append('</html>')
-        
+
         return '\n'.join(html_parts)
-    
+
     def _generate_header(self) -> str:
-        """Generate HTML header with CSS styling"""
+        """
+        Generate HTML header with CSS styling.
+
+        Returns
+        -------
+        str
+            HTML string for the document header.
+        """
         return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -329,21 +434,21 @@ class HTMLGenerator:
             padding: 20px;
             background-color: #f8f9fa;
         }}
-        
+
         .container {{
             background-color: white;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }}
-        
+
         h1 {{
             color: #1a1a1a;
             border-bottom: 3px solid #0056b3;
             padding-bottom: 10px;
             margin-bottom: 30px;
         }}
-        
+
         h2 {{
             color: #0056b3;
             margin-top: 40px;
@@ -352,43 +457,43 @@ class HTMLGenerator:
             border-left: 4px solid #0056b3;
             padding-left: 15px;
         }}
-        
+
         h3 {{
             color: #155724;
             margin-top: 25px;
             margin-bottom: 10px;
             font-size: 1.2em;
         }}
-        
+
         h4 {{
             color: #6f42c1;
             margin-top: 20px;
             margin-bottom: 10px;
             font-size: 1.1em;
         }}
-        
+
         .generation-info {{
             color: #495057;
             font-style: italic;
             margin-bottom: 10px;
         }}
-        
+
         .stats {{
             color: #495057;
             font-weight: bold;
             margin-bottom: 30px;
         }}
-        
+
         .entry {{
             margin-bottom: 40px;
         }}
-        
+
         .entry-separator {{
             border: none;
             border-top: 2px solid #dee2e6;
             margin: 30px 0;
         }}
-        
+
         ul {{
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -396,20 +501,20 @@ class HTMLGenerator:
             padding: 15px 20px;
             margin: 10px 0;
         }}
-        
+
         li {{
             margin-bottom: 5px;
         }}
-        
+
         li strong {{
             color: #1a1a1a;
         }}
-        
+
         p {{
             margin-bottom: 15px;
             text-align: justify;
         }}
-        
+
         .toc {{
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -417,65 +522,72 @@ class HTMLGenerator:
             padding: 20px;
             margin: 20px 0 40px 0;
         }}
-        
+
         .toc h3 {{
             margin-top: 0;
             color: #1a1a1a;
         }}
-        
+
         .toc ul {{
             background-color: transparent;
             border: none;
             padding: 0;
             margin: 0;
         }}
-        
+
         .toc li {{
             margin-bottom: 8px;
         }}
-        
+
         .toc a {{
             color: #0056b3;
             text-decoration: none;
         }}
-        
+
         .toc a:hover {{
             text-decoration: underline;
             color: #004085;
         }}
-        
+
         .toc a:focus {{
             outline: 2px solid #0056b3;
             outline-offset: 2px;
         }}
-        
+
         @media (max-width: 768px) {{
             body {{
                 padding: 10px;
             }}
-            
+
             .container {{
                 padding: 20px;
             }}
-            
+
             h1 {{
                 font-size: 1.8em;
             }}
-            
+
             h2 {{
                 font-size: 1.3em;
             }}
         }}
     </style>
 </head>'''
-    
+
     def _generate_toc(self) -> str:
-        """Generate table of contents"""
+        """
+        Generate table of contents.
+
+        Returns
+        -------
+        str
+            HTML string for the table of contents.
+        """
         toc_items = []
-        
+
         for i, entry in enumerate(self.entries):
             toc_items.append(f'<li><a href="#entry-{i}">{html.escape(entry.filename)}</a></li>')
-        
+
         return f'''<div class="toc">
     <h3>Table of Contents</h3>
     <ul>
@@ -484,8 +596,23 @@ class HTMLGenerator:
 </div>'''
 
 
-def main():
-    """Main function"""
+def main() -> None:
+    """
+    Main function for command-line usage.
+
+    Parses command line arguments and runs the HTML conversion logic.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> python descriptions_to_html.py
+    >>> python descriptions_to_html.py image_descriptions.txt
+    >>> python descriptions_to_html.py input.txt output.html
+    >>> python descriptions_to_html.py --title "My Photo Collection" image_descriptions.txt
+    """
     parser = argparse.ArgumentParser(
         description="Convert image descriptions text file to HTML format",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -495,56 +622,54 @@ Examples:
     python descriptions_to_html.py image_descriptions.txt
     python descriptions_to_html.py input.txt output.html
     python descriptions_to_html.py --title "My Photo Collection" image_descriptions.txt
-    python descriptions_to_html.py --full image_descriptions.txt
-    python descriptions_to_html.py --full --title "Complete Photo Gallery" image_descriptions.txt
         """
     )
-    
+
     parser.add_argument(
         "input_file",
         nargs="?",
         default="image_descriptions.txt",
         help="Input text file with image descriptions (default: image_descriptions.txt)"
     )
-    
+
     parser.add_argument(
         "output_file",
         nargs="?",
         default=None,
         help="Output HTML file (default: input_file with .html extension)"
     )
-    
+
     parser.add_argument(
         "--title",
         default="Image Descriptions",
         help="Title for the HTML page (default: 'Image Descriptions')"
     )
-    
+
     parser.add_argument(
         "--full",
         action="store_true",
         help="Include full details section with metadata for each image (default: description only)"
     )
-    
+
     parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose output"
     )
-    
+
     parser.add_argument(
         "--log-dir",
         help="Directory for log files (default: auto-detect workflow directory)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging before any processing
     setup_logging(args.log_dir, args.verbose)
-    
+
     # Set up file paths
     input_path = Path(args.input_file)
-    
+
     if args.output_file:
         output_path = Path(args.output_file)
     else:
@@ -558,45 +683,45 @@ Examples:
         except ImportError:
             # workflow_utils not available, use default
             output_path = input_path.with_suffix('.html')
-    
+
     # Check if input file exists
     if not input_path.exists():
         logger.error(f"Input file '{input_path}' not found")
         return 1
-    
+
     logger.info(f"Input file: {input_path}")
     logger.info(f"Output file: {output_path}")
     logger.info(f"Title: {args.title}")
     logger.info(f"Include details: {args.full}")
-    
+
     # Parse the descriptions file
     parser = DescriptionsParser(input_path)
     entries = parser.parse()
-    
+
     if not entries:
         logger.warning("No entries found in the input file")
         return 1
-    
+
     logger.info(f"Parsed {len(entries)} entries")
-    
+
     # Generate HTML
     generator = HTMLGenerator(entries, args.title, include_details=args.full)
     html_content = generator.generate()
-    
+
     # Write output file
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        
+
         logger.info(f"Successfully generated HTML file: {output_path}")
         logger.info(f"Processed {len(entries)} image descriptions")
-        
+
         # Show some statistics
         entries_with_metadata = sum(1 for entry in entries if entry.photo_date or entry.location or entry.camera)
         logger.info(f"Entries with metadata: {entries_with_metadata}")
-        
+
         return 0
-        
+
     except Exception as e:
         logger.error(f"Error writing output file: {e}")
         return 1

@@ -72,3 +72,72 @@ Overall, the graph shows that most students use bikes to get home, followed by w
 Timestamp: 2025-07-29 15:19:51
 --------------------------------------------------------------------------------
 
+File: p045-001.jpg
+Path: /run/media/ryhunsaker/250GB/GitHubRepos/poet_Image_Description_Toolkit/custom_results/test/p045-001.jpg
+Photo Date: 2024-05-09 19:41:03
+Model: llama3.2-vision:latest
+Prompt Style: poet_basic
+Description: The image is a bar chart titled "Party Nuts" that displays the number of nuts of four types: peanuts, walnuts, pecans, and pistachios. The chart has a white background with green horizontal lines.
+
+**Main Objects and Relationships:**
+
+* The chart has four bars, each representing a type of nut.
+* The x-axis labels the types of nuts: "peanuts", "walnuts", "pecans", and "pistachios".
+* The y-axis represents the number of nuts, with values from 0 to 40.
+
+**Spatial Layout and Positioning:**
+
+* The chart is centered on the page, with the title "Party Nuts" at the top.
+* The x-axis is at the bottom of the chart, with the four types of nuts listed in order.
+* The y-axis is on the left side of the chart, with values from 0 to 40.
+
+**Key Colors and Lighting:**
+
+* The chart has a white background with green horizontal lines.
+* The bars are yellow, with black text on the x-axis and y-axis.
+
+**Text or Symbols Present:**
+
+* The title "Party Nuts" is at the top of the chart.
+* The x-axis labels the types of nuts: "peanuts", "walnuts", "pecans", and "pistachios".
+* The y-axis has values from 0 to 40.
+
+Overall, the chart is a simple and straightforward representation of the number of nuts of four types. The chart is easy to read and understand, with clear labels and a simple layout.
+Timestamp: 2025-07-29 15:22:21
+--------------------------------------------------------------------------------
+
+File: p046-001.jpg
+Path: /run/media/ryhunsaker/250GB/GitHubRepos/poet_Image_Description_Toolkit/custom_results/test/p046-001.jpg
+Photo Date: 2024-05-09 19:41:34
+Model: llama3.2-vision:latest
+Prompt Style: poet_basic
+Description: The image is a bar chart titled "Students in Each Class" with four blue bars representing different classes. The chart has a white background with green grid lines.
+
+**Main Objects and Relationships:**
+
+* The chart has four blue bars, each representing a class: Class 1, Class 2, Class 3, and Class 4.
+* The bars are arranged in a horizontal line, with Class 1 on the left and Class 4 on the right.
+* The chart has a title, "Students in Each Class," at the top.
+
+**Spatial Layout and Positioning:**
+
+* The chart is centered on the page, with the title at the top and the bars below.
+* The bars are arranged in a horizontal line, with Class 1 on the left and Class 4 on the right.
+* The chart has a white background with green grid lines, which helps to separate the bars and make them easier to read.
+
+**Key Colors and Lighting:**
+
+* The chart has a white background, which is a neutral color.
+* The bars are blue, which is a color that is easy to read and is often used in charts and graphs.
+* There is no lighting in the chart, as it is a 2D image.
+
+**Text or Symbols Present:**
+
+* The chart has a title, "Students in Each Class," at the top.
+* The chart has labels for each class, which are: Class 1, Class 2, Class 3, and Class 4.
+* The chart has a scale on the left side, which shows the number of students in each class.
+
+Overall, the chart is a simple and effective way to show the number of students in each class. The use of blue bars and a white background makes it easy to read and understand. The chart is also easy to read and understand, as it is a simple and straightforward way to show the data.
+Timestamp: 2025-07-29 15:25:08
+--------------------------------------------------------------------------------
+

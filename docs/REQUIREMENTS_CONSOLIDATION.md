@@ -39,7 +39,7 @@ The new `requirements.txt` includes all dependencies needed for:
 
 ## Installation
 
-Users now only need to run:
+To install all dependencies for the toolkit, simply run:
 ```bash
 pip install -r requirements.txt
 ```
@@ -50,6 +50,7 @@ This single command installs everything needed for:
 - ✅ HEIC conversion (`ConvertImage.py`)
 - ✅ HTML report generation (`descriptions_to_html.py`)
 - ✅ Complete workflow system (`workflow.py`)
+- ✅ All testing utilities (`test/` directory)
 
 ## Documentation Updated
 
@@ -59,6 +60,7 @@ All references to multiple requirements files have been updated in:
 - `IMPLEMENTATION_SUMMARY.md`
 - `test_workflow.py`
 - `demo_workflow.py`
+- All script and tool documentation in `docs/`
 
 ## Benefits
 
@@ -67,3 +69,9 @@ All references to multiple requirements files have been updated in:
 3. **Easier Maintenance**: One file to update instead of three
 4. **Better User Experience**: No confusion about which requirements file to use
 5. **Comprehensive Coverage**: All functionality available with one installation
+
+## Migration Notes
+
+- Remove any old requirements files from your project directory.
+- Always use `pip install -r requirements.txt` for setup.
+- If you add new dependencies, update `requirements.txt` only.

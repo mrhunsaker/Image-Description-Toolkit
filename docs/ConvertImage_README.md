@@ -1,17 +1,18 @@
 # HEIC to JPG Converter
 
-A Python script to convert HEIC/HEIF image files to JPG format. Supports both individual files and batch conversion of directories with various quality and metadata options.
+A Python script to convert HEIC/HEIF image files to JPG format. Now fully integrated with the workflow system for organized output and batch processing. Supports both individual files and batch conversion of directories with various quality and metadata options.
 
 ## Features
 
 - ✅ Convert single HEIC/HEIF files to JPG
-- 📁 Batch convert entire directories
+- 🗂️ Batch convert entire directories
 - 🔄 Recursive directory processing
 - 🎨 Adjustable JPEG quality (1-100)
 - 📊 Metadata preservation option
 - 📈 Progress tracking and statistics
 - 🛡️ Robust error handling
 - 🎯 Cross-platform support
+- 🗃️ Workflow integration: outputs organized in `workflow_output/converted_images/` by default
 
 ## Requirements
 
@@ -25,6 +26,7 @@ A Python script to convert HEIC/HEIF image files to JPG format. Supports both in
 ```bash
 pip install -r requirements.txt
 ```
+This single requirements file covers all toolkit features.
 
 Or install manually:
 ```bash
@@ -38,6 +40,7 @@ pip install pillow pillow-heif
 ```bash
 python ConvertImage.py <input> [options]
 ```
+Outputs are organized in `workflow_output/converted_images/` by default.
 
 ### Basic Examples
 
@@ -59,6 +62,10 @@ python ConvertImage.py photos/ --recursive
 
 # Convert without preserving metadata
 python ConvertImage.py photos/ --no-metadata
+
+# Output to workflow structure (default)
+python ConvertImage.py photos/
+# → workflow_output/converted_images/
 ```
 
 ### Advanced Examples
@@ -72,23 +79,27 @@ python ConvertImage.py input_folder/ --quality 80 --no-metadata --output output_
 
 # Convert single file to specific output location
 python ConvertImage.py important_photo.heic --output family_photos/converted_photo.jpg
+
+# Use with workflow system
+python workflow.py media_folder --steps convert
 ```
 
 ## Command Line Options
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `--output` | `-o` | Output file or directory | Creates 'converted' subdirectory |
+| `--output` | `-o` | Output file or directory | `workflow_output/converted_images/` |
 | `--recursive` | `-r` | Process subdirectories recursively | False |
 | `--quality` | `-q` | JPEG quality (1-100) | 95 |
 | `--no-metadata` | | Don't preserve metadata | False (metadata preserved) |
+| `--verbose` | | Enable verbose logging | False |
 
 ## File Structure
 
 ### Single File Conversion
 ```
 Input:  photo.heic
-Output: photo.jpg (same directory)
+Output: workflow_output/converted_images/photo.jpg
 ```
 
 ### Directory Conversion
@@ -101,12 +112,8 @@ Input Directory:
         └── img3.heic
 
 Output (default):
-  photos/
-    ├── img1.heic
-    ├── img2.heic
-    ├── subfolder/
-    │   └── img3.heic
-    └── converted/
+  workflow_output/
+    └── converted_images/
         ├── img1.jpg
         ├── img2.jpg
         └── subfolder/  (if --recursive)
@@ -130,6 +137,7 @@ The script includes comprehensive error handling for:
 - Permission errors
 - Disk space issues
 - Corrupted files
+- Workflow output directory creation issues
 
 ## Metadata Preservation
 
@@ -141,6 +149,8 @@ By default, the script preserves EXIF metadata from the original HEIC files. Thi
 
 Use `--no-metadata` to exclude metadata for smaller file sizes.
 
+Metadata is preserved in all output files unless explicitly disabled.
+
 ## Supported Formats
 
 ### Input Formats
@@ -150,12 +160,14 @@ Use `--no-metadata` to exclude metadata for smaller file sizes.
 ### Output Format
 - `.jpg` (JPEG format)
 
+All output files are placed in the workflow output directory by default.
+
 ## Performance Tips
 
 1. **Quality vs Size**: Use quality 85-90 for good balance
 2. **Batch Processing**: Process directories rather than individual files
 3. **Recursive Processing**: Use `--recursive` for deep directory structures
-4. **Output Organization**: Specify output directories to keep files organized
+4. **Output Organization**: Use workflow system for automatic organization
 
 ## Troubleshooting
 
@@ -172,7 +184,7 @@ Use `--no-metadata` to exclude metadata for smaller file sizes.
 
 **Permission Errors**
 - Ensure read access to input files
-- Ensure write access to output directory
+- Ensure write access to output directory (workflow_output/converted_images/)
 - Run with appropriate permissions
 
 **Memory Issues with Large Files**
@@ -184,14 +196,14 @@ Use `--no-metadata` to exclude metadata for smaller file sizes.
 
 ```
 🔍 Found 3 HEIC/HEIF files to convert
-✅ Converted: IMG_001.heic -> IMG_001.jpg
-✅ Converted: IMG_002.heic -> IMG_002.jpg
-✅ Converted: IMG_003.heic -> IMG_003.jpg
+✅ Converted: IMG_001.heic -> workflow_output/converted_images/IMG_001.jpg
+✅ Converted: IMG_002.heic -> workflow_output/converted_images/IMG_002.jpg
+✅ Converted: IMG_003.heic -> workflow_output/converted_images/IMG_003.jpg
 
 📊 Conversion complete:
    ✅ Successful: 3
    ❌ Failed: 0
-   📁 Output directory: ./converted
+   🗂️ Output directory: workflow_output/converted_images/
 ```
 
 ## License
@@ -201,3 +213,7 @@ This script is provided as-is for educational and personal use.
 ## Contributing
 
 Feel free to submit issues or improvements to enhance the script's functionality.
+
+---
+
+For full workflow documentation and integration examples, see `WORKFLOW_README.md`.

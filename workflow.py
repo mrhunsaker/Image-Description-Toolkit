@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Workflow wrapper - forwards calls to scripts/workflow.py"""
-import sys
 import os
 import subprocess
+import sys
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 scripts_dir = os.path.join(root_dir, "scripts")
